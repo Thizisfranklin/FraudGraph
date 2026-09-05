@@ -1,4 +1,4 @@
-# FraudGraph — Fraud, Risk & Customer Trust Intelligence
+# FraudGraph — Fraud, Risk & Customer Trust 
 
 > A graph-based fraud analytics project investigating whether relationships between transactions, payment attributes, devices, and customer identity signals can improve fraud detection while reducing unnecessary friction for legitimate users.
 
