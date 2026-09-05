@@ -1,168 +1,344 @@
-# FraudGraph
+# FraudGraph — Fraud, Risk & Customer Trust Intelligence
 
-> Graph-based fraud analytics — modeling fraud as a network problem, not just a transaction problem.
+> A graph-based fraud analytics project investigating whether relationships between transactions, payment attributes, devices, and customer identity signals can improve fraud detection while reducing unnecessary friction for legitimate users.
 
-[![Status](https://img.shields.io/badge/status-active%20development-blue)](https://github.com)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+## Context
+
+Online platforms must make fraud decisions quickly.
+
+If fraud controls are too weak, the company may experience:
+
+* financial losses
+* chargebacks
+* abuse
+* account compromise
+
+But fraud controls can also be too aggressive.
+
+A legitimate customer may experience:
+
+* a declined payment
+* additional verification
+* an account restriction
+* a delayed purchase
+* a manual review
+
+The business problem is therefore not simply:
+
+> **How much fraud can we detect?**
+
+It is:
+
+> **How much fraud can we detect without creating unnecessary friction for legitimate customers?**
 
 ---
 
-## The Problem
+## 1. Business Questions
 
-Traditional fraud detection looks at individual transactions in isolation. But fraud rarely happens in isolation.
+### A. Can relational information improve fraud detection?
 
-A compromised account shares a device with three others. Two flagged payment methods resolve to the same IP address. A cluster of new users all registered within minutes of each other, from the same subnet.
+Individual transactions may look legitimate on their own.
 
-These patterns are invisible at the transaction level. They become visible as a graph.
+Fraud can become more visible when relationships are considered.
 
-**FraudGraph** builds a connected representation of users, devices, payment methods, IP addresses, and transactions — then mines that network for the kind of structural signals that isolated transaction analysis can't see.
+Examples:
 
----
-
-## What This Project Explores
-
-- **Entity relationship modeling** — representing transactional data as a graph of interconnected entities
-- **Graph feature engineering** — deriving risk signals from network structure (centrality, clustering, community detection)
-- **Risk scoring** — building interpretable, prioritized risk scores from graph-derived features
-- **Investigation tooling** — designing analyst-facing dashboards and interactive network visualizations
-- **Realistic synthetic data** — generating and validating data with credible relationship complexity, noise, and fraud pattern representation
-
----
-
-## Architecture
-
-```
-Transactional Data
-        │
-        ▼
-Entity Resolution
-(User · Device · IP · Payment Method)
-        │
-        ▼
-Graph Construction
-        │
-        ├──────────────────────────────────┐
-        ▼                                  ▼
-Graph Feature Engineering           Community Detection
-(Degree, Centrality, Clustering)    (Louvain, Label Propagation)
-        │                                  │
-        └──────────────┬───────────────────┘
-                       ▼
-               Risk Scoring Layer
-                       │
-                       ▼
-           Investigation Dashboard
-                       │
-                       ▼
-      Interactive Network Visualization
+```text
+Transaction → Payment Card
+Transaction → Device
+Transaction → Email Domain
+Transaction → Address
+Transaction → Identity Signal
 ```
 
----
+The project investigates whether graph-derived features improve detection beyond transaction-level models.
 
-## Why Graph Analytics for Fraud?
+### B. What threshold should trigger intervention?
 
-Fraudsters exploit the gaps between siloed data systems. A device shared across ten accounts is a transaction-level blind spot — but in a graph, it's a high-degree node connecting otherwise unrelated entities. The same logic applies to shared IPs, shared payment instruments, and coordinated account creation.
+A lower risk threshold may catch more fraud but incorrectly flag more legitimate transactions.
 
-Graph analytics surfaces these structural patterns by treating the *relationships* between entities as first-class signals, alongside the raw transaction attributes.
+A higher threshold may improve customer experience but allow additional fraud.
 
-Key graph-derived signals this project explores:
+The final decision therefore considers:
 
-| Signal | What it captures |
-|---|---|
-| Node degree | How many other entities is this one connected to? |
-| Betweenness centrality | Is this entity a bridge between otherwise separate clusters? |
-| Clustering coefficient | Are an entity's neighbors tightly interconnected? |
-| Community membership | Does this entity belong to a suspiciously dense subgraph? |
-| Shared resource risk | Is a device, IP, or payment method shared across flagged entities? |
+**fraud capture + false positives + review workload**
+
+rather than model accuracy alone.
 
 ---
 
-## Tech Stack
+## 2. Scope
 
-**Analytics & Modeling**
-- Python · Pandas · NumPy · Scikit-learn
+Version 1 focuses on **online payment fraud**.
 
-**Graph Analytics**
-- NetworkX · Neo4j AuraDB
+It will not attempt to:
 
-**Visualization & Dashboards**
-- Streamlit · Plotly · Pyvis
+* detect every type of financial crime
+* build a real banking fraud platform
+* claim that false positives directly cause customer churn
+* model every possible graph neural network
+* build a real-time production streaming system
 
-**Development**
-- Git · GitHub · Jupyter Notebook
-
----
-
-## Project Status
-
-🚧 **Active Development**
-
-| Phase | Status |
-|---|---|
-| Synthetic data generation & validation | 🔄 In progress |
-| Entity resolution & graph construction | 🔄 In progress |
-| Graph feature engineering | 📋 Planned |
-| Risk scoring methodology | 📋 Planned |
-| Investigation dashboard | 📋 Planned |
-| Interactive network visualization | 📋 Planned |
+The goal is a defensible offline fraud and intervention analysis.
 
 ---
 
-## A Note on Synthetic Data
+## 3. Data
 
-This project uses synthetic data generated for experimentation and learning.
+### Primary Candidate — IEEE-CIS Fraud Detection
 
-A known failure mode in synthetic fraud datasets is being *too clean* — perfectly balanced classes, no noise, unrealistically tidy relationship structures. A model trained on such data may perform well on paper while learning patterns that don't exist in real environments.
+The dataset contains transaction and identity information joined through `TransactionID`.
 
-Development here includes explicit validation of:
+Useful information includes:
 
-- Relationship realism (do shared devices/IPs occur at plausible rates?)
-- Class distribution (is the fraud rate representative of real-world baselines?)
-- Network complexity (are graph structures sufficiently varied and non-trivial?)
-- Noise and variability (are there false positives, ambiguous cases, behavioral drift?)
-- Fraud pattern representation (do synthetic fraud clusters resemble known real-world patterns?)
+* transaction amount
+* product
+* payment-card attributes
+* address attributes
+* email domains
+* device information
+* behavioral/identity signals
+* fraud label
 
-The goal is not to build a model that performs well on synthetic data. The goal is to build an approach that *could* hold up under more realistic conditions.
+Some variables are intentionally anonymized.
+
+The project will not invent meanings for masked variables.
 
 ---
 
-## Repository Structure
+## 4. Graph Construction
 
+Possible node/entity types:
+
+```text
+Transaction
+Card
+Device
+Email Domain
+Address
 ```
+
+Possible relationships:
+
+```text
+Transaction --USED--> Card
+Transaction --FROM_DEVICE--> Device
+Transaction --EMAIL--> Email Domain
+Transaction --ADDRESS--> Address
+```
+
+This allows the system to detect patterns that may not be obvious from one transaction at a time.
+
+Example:
+
+```text
+Card A
+  |
+Transaction 1 ---- Device X
+                    |
+Transaction 2 ---- Card B
+                    |
+Transaction 3 ---- Card C
+```
+
+Three transactions that appear unrelated may actually share the same device.
+
+---
+
+## 5. Modeling
+
+Keep the comparison simple.
+
+### Baseline
+
+**Logistic Regression**
+
+### Traditional ML
+
+**XGBoost**
+
+### Graph-Enhanced ML
+
+**XGBoost + graph features**
+
+Candidate graph features:
+
+* degree
+* number of shared devices
+* number of shared payment entities
+* connected-component size
+* centrality
+* neighborhood fraud rate
+
+### Optional Extension
+
+If time permits:
+
+**GraphSAGE or another GNN**
+
+Deep learning is a stretch goal, not a requirement for completing the project.
+
+---
+
+## 6. Evaluation
+
+Fraud is highly imbalanced, so accuracy will not be the main metric.
+
+Evaluate with:
+
+* PR-AUC
+* precision
+* recall
+* false-positive rate
+* recall at fixed false-positive rate
+* Precision@K
+
+The main technical question is:
+
+> **Do graph relationships improve fraud detection compared with transaction-only features?**
+
+---
+
+## 7. Customer-Friction Analysis
+
+Model thresholds will also be interpreted as product decisions.
+
+For each threshold measure:
+
+```text
+Fraud detected
+Fraud missed
+Legitimate transactions flagged
+Transactions sent to review
+```
+
+Example decision:
+
+```text
+Threshold A:
+Higher fraud recall
+Higher legitimate-user interruption
+
+Threshold B:
+Slightly lower fraud recall
+Substantially fewer false positives
+```
+
+The recommended threshold should balance:
+
+**risk protection** and **customer experience**.
+
+---
+
+## 8. Trust & Retention
+
+The available fraud dataset does not directly measure customer trust or retention.
+
+Therefore, the project will not claim:
+
+> "The model increased retention."
+
+Instead, false-positive interventions will be treated as measurable **customer-friction proxies**.
+
+A production system should later measure whether intervention policies affect:
+
+* repeat transactions
+* account abandonment
+* customer-support contacts
+* verification completion
+* appeal/reversal rates
+* retention
+
+---
+
+## 9. Dashboard
+
+A compact Trust & Safety dashboard can show:
+
+### Model Performance
+
+* fraud recall
+* precision
+* PR-AUC
+
+### Policy Simulator
+
+Adjust the risk threshold and observe:
+
+* fraud caught
+* legitimate users flagged
+* review volume
+
+### Graph Investigation
+
+Explore suspicious connected entities and fraud clusters.
+
+---
+
+## 10. Business Recommendation
+
+> Added after analysis.
+
+The final recommendation should answer:
+
+1. Do graph features materially improve fraud detection?
+2. Which relationships are most useful?
+3. What threshold produces the best fraud/customer-friction trade-off?
+4. How much manual review does the policy create?
+5. What user-experience metrics should be monitored after deployment?
+
+---
+
+## 11. Limitations
+
+Known limitations:
+
+* several IEEE-CIS variables are anonymized
+* offline data does not directly measure customer trust
+* false positives are proxies for user friction, not retention itself
+* fraud behavior evolves over time
+* model thresholds depend on the business cost of fraud versus legitimate-user interruption
+
+---
+
+## 12. Technology Stack
+
+**Data:** Python, SQL, pandas
+**Graph Analytics:** NetworkX, Neo4j
+**Machine Learning:** scikit-learn, XGBoost
+**Optional Deep Learning:** PyTorch Geometric
+**Visualization:** Plotly / Streamlit
+**Development:** Git, GitHub, Jupyter
+
+---
+
+## 13. Repository Structure
+
+```text
 fraudgraph/
+│
+├── README.md
 ├── data/
-│   ├── raw/                  # Synthetic transaction records
-│   └── processed/            # Entity-resolved, graph-ready datasets
+│   └── README.md
 ├── notebooks/
-│   ├── 01_data_generation.ipynb
-│   ├── 02_graph_construction.ipynb
-│   ├── 03_feature_engineering.ipynb
-│   └── 04_risk_scoring.ipynb
+│   ├── 01_data_validation.ipynb
+│   ├── 02_fraud_eda.ipynb
+│   ├── 03_graph_construction.ipynb
+│   ├── 04_baseline_models.ipynb
+│   ├── 05_graph_models.ipynb
+│   └── 06_threshold_analysis.ipynb
+├── sql/
 ├── src/
-│   ├── data/                 # Data generation and entity resolution
-│   ├── graph/                # Graph construction and feature extraction
-│   ├── scoring/              # Risk scoring logic
-│   └── dashboard/            # Streamlit app
-├── tests/
+├── dashboard/
+├── reports/
 ├── requirements.txt
-└── README.md
+└── .gitignore
 ```
 
 ---
 
-## Future Directions
+## 14. Results
 
-- Near real-time risk scoring pipelines
-- Graph embeddings and representation learning (Node2Vec, GraphSAGE)
-- Unsupervised anomaly detection on graph structure
-- Explainability features for investigation workflows
-- Evaluation on larger, more complex graph topologies
+> To be completed after analysis.
 
----
-
-## About
-
-Building as a portfolio project exploring the intersection of graph analytics and fraud detection. Motivated by the observation that fraud often leaves structural footprints in relationship data that transaction-level analysis alone can't capture.
-
-Questions, feedback, or collaboration — feel free to open an issue or reach out.
+No hypothetical fraud, customer-friction, or retention improvements will be presented as actual results.
