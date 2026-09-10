@@ -1,4 +1,4 @@
-# FraudGraph — Graph Fraud & Risk Identifier 
+# FraudGraph — Graph-Based Fraud Detection
 
 > A fraud analytics project testing whether relationships between accounts, devices, IP addresses, payment instruments, and transactions can reveal coordinated fraud patterns that transaction-level models miss.
 
