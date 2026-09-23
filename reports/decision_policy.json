@@ -1,0 +1,15 @@
+{
+  "selected_model": "named_xgboost_graph",
+  "low_review_boundary": 0.8071288466453552,
+  "review_high_boundary": 0.8085448145866394,
+  "high_enabled": true,
+  "high_precision_target": 0.9,
+  "review_fraction_validation": 0.05,
+  "high_min_labeled_cases": 20,
+  "test_band_counts": {
+    "LOW": 44963,
+    "HIGH": 1679,
+    "REVIEW": 5
+  },
+  "note": "High precision is empirical on labeled validation only; no guarantee on unknowns or future traffic. Null high boundary disables HIGH."
+}

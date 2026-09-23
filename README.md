@@ -1,264 +1,170 @@
-# FraudGraph — Graph-Based Fraud Detection
+# FraudGraph — Does network context improve illicit-transaction detection?
 
-> A fraud analytics project testing whether relationships between accounts, devices, IP addresses, payment instruments, and transactions can reveal coordinated fraud patterns that transaction-level models miss.
+A reproducible classical machine-learning study on the **full Elliptic++ transaction graph**: 203,769 transactions, 234,355 directed money-flow edges, and 49 time steps.
 
+**Measured answer:** graph context improves XGBoost with the 15 named transaction attributes, from test average precision **0.4239 to 0.5240**. The improvement shrinks to **0.0049 AP** when 93 anonymized local features are also available. Graph features hurt both logistic baselines on the pooled test set. **All boosted models fail to generalize reliably to the final six time steps.** This is a rigorous batch-triage experiment, not a production fraud detector.
 
-## Project Overview
+![Test model comparison](reports/figures/model_comparison.png)
 
-Most traditional fraud models examine the characteristics of an individual transaction and ask:
+## Business problem and scope
 
-> **Does this transaction look suspicious?**
+Analysts have limited capacity. A useful risk system must find illicit transactions without creating excessive unnecessary reviews of legitimate activity. The central comparison holds labels, time splits, learner settings, and evaluation constant while adding observable graph structure.
 
-That can work well when fraudulent behavior is obvious from the transaction itself.
+The target is the dataset's illicit/licit classification. It is not a measurement of confirmed customer fraud, financial losses prevented, or legal guilt. This study uses transactions only; it does not claim device/IP fraud coverage, wallet-level attribution, or real-time blocking.
 
-The problem becomes more difficult when individual transactions appear normal but are connected to a larger pattern of suspicious activity.
+## Data and validation
 
-FraudGraph explores whether those **relationships** provide information that a transaction-level model cannot see.
+Source: [Elliptic++ authors' repository](https://github.com/git-disl/EllipticPlusPlus), pinned to `08fe6aded83afb97bf5a79a71130f542ca783c2e`. The downloader verifies SHA-256 against the three pinned Git LFS objects. See [data validation](reports/data_validation.json) for exact hashes and sizes.
 
-Using graph data from the Bitcoin network, the project will compare traditional machine-learning approaches with models enhanced by information about how transactions and wallet addresses are connected.
+- 4,545 illicit, 42,019 licit, and 157,205 unknown transactions.
+- No duplicate IDs, duplicate edges, self-loops, or dangling edge endpoints found.
+- 965 rows lack the 17 added transaction/degree attributes; training-only median imputation handles model inputs.
+- All 234,355 edges lie within their time bucket. The observed graph has 49 weak components, no isolates, median total degree 2, and maximum degree 473.
+- Unknown labels stay unknown. They enter graph topology and consume review capacity, but never become negative training examples.
 
-The central question is:
+Raw data is downloaded from the source, not redistributed in this repository. Consult the authors' terms before redistributing it. Citation: Elmougy & Liu (2023), [Demystifying Fraudulent Transactions and Illicit Nodes in the Bitcoin Network for Financial Forensics](https://doi.org/10.1145/3580305.3599803).
 
-> **Can network relationships improve the detection of illicit financial activity beyond analyzing transactions individually?**
+## Experiment design and leakage control
 
----
+Train on steps **1–29**, validate on **30–39**, and test on **40–49**. This gives 26,381 / 8,999 / 11,184 labeled rows. Hyperparameters are fixed, thresholds are selected on validation, and test results never choose the policy. Average precision (AP) is the non-interpolated PR-AUC summary used here.
 
-## The Problem
+Scoring occurs **at bucket close**: graph snapshots contain only nodes and edges observed by that cutoff. This explicitly allows same-bucket relationships and is not an instantaneous online replay. No label-derived neighbor features are used. Transaction IDs, time indices, source aggregate features, supplied graph degrees, and labels are excluded from predictors. Imputation and scaling are fit only on training data. See the [leakage audit](reports/LEAKAGE_AUDIT.md).
 
-Imagine one transaction with completely ordinary characteristics.
+The primary baseline uses 15 named transaction attributes (amounts, fees, size, address counts). Eight graph features add degrees, scaled PageRank, component statistics, and local neighborhood structure. The sensitivity family adds 93 anonymized local columns to both arms. Those legacy columns have less auditable provenance; their stronger baseline prevents overstating graph's incremental value. See the [feature dictionary](reports/FEATURE_DICTIONARY.md).
 
-Its value, timing, and other individual features may not make it appear suspicious.
+Models: standardized, class-balanced Logistic Regression and histogram XGBoost with 250 depth-4 trees. The small fixed experiment budget avoids costly searches. No GNN, Neo4j server, or GPU is necessary.
 
-Now suppose that transaction is connected to several wallets that interact repeatedly with known illicit addresses.
+## Actual temporal test results
 
-Viewed by itself, the transaction looks normal.
+| Feature family / model | Transaction AP | + Graph AP | Difference |
+|---|---|---|---|
+| named / logistic | 0.0906 | 0.0696 | -0.0210 |
+| named / xgboost | 0.4239 | 0.5240 | +0.1000 |
+| extended / logistic | 0.1496 | 0.1162 | -0.0333 |
+| extended / xgboost | 0.6349 | 0.6398 | +0.0049 |
 
-Viewed as part of a network, the context changes.
+For the named-attribute XGBoost pair, the AP difference is +0.1000, with a paired time-bucket bootstrap 95% interval [0.0015, 0.1365] over 1,000 resamples. The extended XGBoost difference has interval [-0.0008, 0.0115], which includes zero. Ten test buckets support only limited uncertainty claims.
 
-This is why fraud can naturally become a graph problem.
+At each model's validation-selected F1 threshold:
 
-The project will investigate whether patterns such as:
+| Primary model | Precision | Recall | FPR | TP | FP | FN | TN |
+|---|---|---|---|---|---|---|---|
+| logistic_tx | 0.084 | 0.832 | 54.617% | 529 | 5761 | 107 | 4787 |
+| logistic_graph | 0.076 | 0.642 | 47.118% | 408 | 4970 | 228 | 5578 |
+| xgboost_tx | 0.728 | 0.429 | 0.967% | 273 | 102 | 363 | 10446 |
+| xgboost_graph | 0.735 | 0.484 | 1.052% | 308 | 111 | 328 | 10437 |
 
-* connections to suspicious entities,
-* repeated money-flow relationships,
-* unusually connected nodes,
-* network communities,
-* and the structure surrounding a transaction
+The AP improvement is not a blanket operational improvement: the graph XGBoost model also produces more false positives at its F1 threshold. See [all results](reports/results.csv), [experiment ledger](reports/experiment_log.jsonl), and [per-time results](reports/test_by_time.csv).
 
-provide additional information for detecting illicit activity.
+### The important failure: temporal drift
 
-There is also a second problem.
+![Temporal generalization](reports/figures/temporal_generalization.png)
 
-A fraud system that aggressively flags everything suspicious can create large numbers of false positives.
+Named-attribute graph XGBoost AP is 0.7070 on test steps 40–43 and 0.0257 on 44–49. The latter cohort's illicit prevalence is approximately 0.0273. The strongest extended models also collapse. This blocks any claim of stable future detection performance. The cause is not established; changes in the observed population, labeling, or transaction patterns are plausible hypotheses, not verified explanations.
 
-The project therefore considers both:
+Post-hoc diagnostics preserve the original conclusion without retuning the final policy: removing named-feature fingerprints seen in training leaves the graph AP essentially unchanged (0.5241). A shuffled-label control reaches validation AP 0.0978, versus prevalence 0.1153. Degree-only XGBoost reaches test AP 0.4683; omitting component features reaches 0.5057. Component size/density can encode time-bucket cohort properties in this dataset, so these ablations matter. All are retained in [diagnostic results](reports/structural_ablations.csv) and [robustness analysis](reports/robustness.csv).
 
-> **How much illicit activity can we identify?**
+## Analyst decision system
 
-and:
+Validation selects `named_xgboost_graph` within the primary family. Scores below **0.807129** are LOW; scores from that boundary to **0.808545** are REVIEW; higher scores are HIGH. LOW means no automatic escalation, REVIEW means routine human review, and HIGH means priority human review. These scores are not calibrated probabilities.
 
-> **How much legitimate activity do we incorrectly disrupt in the process?**
+The low boundary represents an illustrative 5% validation-traffic review scenario. The high boundary targets at least 90% observed labeled validation precision with at least 20 labeled cases. On test the bands contain:
 
----
+| Band | Known illicit | Known licit | Unknown | Total |
+|---|---|---|---|---|
+| HIGH | 291 | 76 | 1312 | 1679 |
+| LOW | 345 | 10472 | 34146 | 44963 |
+| REVIEW | 0 | 0 | 5 | 5 |
 
-## Data
+The narrow REVIEW interval and five unknown REVIEW cases are the actual result of this policy, not a useful three-way business separation to exaggerate. HIGH precision among labeled test cases is only 79.3%; the validation target does not transfer. Unknowns make population precision unidentifiable.
 
-The project will use **Elliptic++**, a graph dataset developed for financial-forensics research on the Bitcoin network.
+An alternative policy enforces top-K review capacity **per time step**, including unknowns:
 
-Its transaction graph contains **203,769 transactions connected by 234,355 money-flow edges**, with transaction labels identifying illicit, licit, and unknown activity. Elliptic++ also includes a much larger wallet-address graph that can be incorporated if the project later expands.
+| Capacity | Reviewed | Known illicit | Known licit | Unknown | Known illicit recall | All-traffic precision bounds |
+|---|---|---|---|---|---|---|
+| 1% | 471 | 83 | 18 | 370 | 13.1% | 17.6%–96.2% |
+| 2% | 938 | 142 | 52 | 744 | 22.3% | 15.1%–94.5% |
+| 5% | 2337 | 273 | 140 | 1924 | 42.9% | 11.7%–94.0% |
+| 10% | 4670 | 324 | 530 | 3816 | 50.9% | 6.9%–88.7% |
+| 20% | 9333 | 389 | 1427 | 7517 | 61.2% | 4.2%–84.7% |
 
-The dataset is particularly useful because the relationships already exist in the underlying data.
+At 5% capacity, 273 of 636 known illicit cases are captured (42.9%), with 140 known licit and 1924 unknown cases reviewed. Precision bounds assume all unknown reviewed cases are licit or illicit, respectively; they are not confidence intervals. No claims of monetary savings or unique customer friction are possible from these labels. Read the [decision framework](reports/DECISION_FRAMEWORK.md).
 
-The graph does not need to be artificially created simply to demonstrate graph machine learning.
+## Explainability and network cases
 
-This allows the project to focus on understanding whether the network itself provides useful fraud signals.
+Validation permutation importance identifies model reliance; transaction size is the dominant named feature, while PageRank and local structure contribute additional signal. Native XGBoost TreeSHAP explains selected cases in **log-odds**, with an executed additivity check. These are associative model explanations, not causes of criminal behavior.
 
----
+Three deterministic, bounded case studies show the highest-score illicit transaction, the highest-score licit transaction, and the largest graph-score uplift among known illicit test cases. PNGs show directed edges and retrospective label colors. Offline HTML versions support hover and pan/zoom, capped at 40 nodes. They are case viewers rather than a whole-graph explorer.
 
-## Analytical Approach
+- [Permutation importance](reports/figures/feature_importance.png)
+- [Case summaries](reports/cases.csv) and [TreeSHAP contributions](reports/case_shap_logodds.csv)
+- [Illicit neighborhood](reports/figures/case_high_score_illicit.html), [licit high-score neighborhood](reports/figures/case_high_score_licit.html), [graph uplift neighborhood](reports/figures/case_graph_uplift.html)
 
-The project will deliberately begin without graph information.
-
-### Transaction-Level Baseline
-
-A conventional model will first use only transaction characteristics to classify known illicit and licit transactions.
-
-An interpretable baseline such as Logistic Regression can establish a starting point, followed by a stronger tree-based model such as XGBoost.
-
-This answers:
-
-> **How well can we detect illicit transactions without knowing anything about their network?**
-
-### Graph Analysis
-
-The transactions will then be represented as nodes, while money flows between them become edges.
-
-The network can be explored to understand:
-
-* transaction neighborhoods,
-* suspicious connected components,
-* concentrations of illicit activity,
-* and relationships between labeled and unlabeled transactions.
-
-### Graph Features
-
-Network characteristics can then be converted into model features.
-
-Examples may include:
-
-* number of neighboring transactions,
-* concentration of illicit neighbors,
-* connected-component characteristics,
-* centrality,
-* and other structural measures.
-
-These features can be added to the traditional transaction model.
-
-The core comparison then becomes:
-
-> **Transaction model vs. transaction model + network information.**
-
-If the graph-enhanced model performs better under the same evaluation conditions, there is evidence that relational information contributes useful risk signals.
-
----
-
-## Proposed System Flow
-
-```mermaid
-flowchart LR
-
-    A[Elliptic++ Transactions] --> D[(PostgreSQL)]
-    B[Money-Flow Edges] --> D
-    C[Known Illicit / Licit Labels] --> D
-
-    D --> E[Cleaning & Validation]
-
-    E --> F[Transaction Features]
-    F --> G[Baseline Fraud Model]
-
-    E --> H[Graph Construction]
-    H --> I[Network Analysis]
-    I --> J[Graph Risk Features]
-
-    J --> K[Graph-Enhanced Model]
-
-    G --> L[Model Comparison]
-    K --> L
-
-    L --> M[Risk Threshold Analysis]
-
-    M --> N[Low Risk]
-    M --> O[Manual Review]
-    M --> P[High Risk]
-
-    N --> Q[Risk Decision Framework]
-    O --> Q
-    P --> Q
-```
-
----
-
-## Interactive Graph Visualization
-
-The visual component of FraudGraph should make the core idea immediately understandable.
-
-Rather than only showing model metrics, the project can include an interactive network explorer.
-
-A user could select a transaction and inspect the surrounding network:
+## Architecture and repository map
 
 ```text
-                   Transaction
-                       ●
-                     /   \
-                    ●     ●
-                   /       \
-               Wallet     Transaction
-                 ●           ●
-                / \         / \
-               ●   ●       ●   ●
+config.json                 Split, seed, policy scenario, resource limits
+src/fraudgraph/
+  data.py                   Pinned acquisition and schema/data validation
+  graph.py                  Time-filtered directed snapshots and features
+  models.py                 Comparable logistic and XGBoost specifications
+  evaluation.py             AP, thresholds, capacity, paired bootstrap
+  pipeline.py               Executed experiment and evidence orchestration
+  diagnostics.py            Negative control and robustness/ablation checks
+  visualization.py          EDA, model figures, bounded interactive cases
+notebooks/01...07            Executed analytical narrative
+sql/                        Analytical queries and optional PostgreSQL schema
+tests/                      Critical methodology and regression tests
+reports/                    Measured results, audits, claims, and figures
+data/raw, data/processed     Local reproducible data (Git-ignored)
+models/                     Local fitted estimators (Git-ignored)
+scripts/                    Notebook execution and evidence-based reporting
 ```
 
-The visualization could distinguish known illicit, licit, and unknown nodes and allow the viewer to expand the neighborhood around suspicious activity.
+SQL performs time/class aggregation, edge joins, incoming-degree extraction, and risk summaries. Four analytical queries were executed in SQLite; incoming degrees match NetworkX exactly. PostgreSQL-compatible schema is included, but a PostgreSQL server was **not** executed.
 
-The goal is not simply to create an impressive graphic.
+## Reproduce
 
-It should help explain **why a transaction received additional risk information from its network context**.
+```bash
+git clone https://github.com/Thizisfranklin/FraudGraph.git
+cd FraudGraph
+git switch implementation/classical-graph-study
+python -m venv .venv
+```
 
-That makes the visualization part of the model explanation rather than decoration.
+Activate on Windows PowerShell:
 
----
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
 
-## Evaluation
+Or on macOS/Linux:
 
-Because illicit transactions represent a minority class, simple classification accuracy can be misleading.
+```bash
+source .venv/bin/activate
+```
 
-The project will focus on metrics such as:
+Then, from the repository root:
 
-* precision,
-* recall,
-* PR-AUC,
-* false-positive rate,
-* and fraud detected under a limited review capacity.
+```bash
+python -m pip install -r requirements.txt
+python -m pip install --no-deps -e .
+python -m pytest -q
+python -m fraudgraph.pipeline --download
+python -m fraudgraph.diagnostics
+python scripts/build_notebooks.py
+python scripts/execute_notebooks.py
+python scripts/build_reports.py
+python scripts/verify_artifacts.py
+```
 
-The graph-enhanced model will be evaluated against the same baseline and dataset split so that any improvement can be measured fairly.
+Use Python 3.12 (tested on 3.12.14). The branch command applies until the implementation is merged. After merge, use the default branch. Alternatively invoke `.venv/Scripts/python.exe` on Windows or `.venv/bin/python` on Unix directly if shell activation is unavailable. The downloader needs internet access; subsequent runs can omit `--download`. The three raw files total about 702 MB. Allow several GB for the environment, parquet cache, models, and reports. XGBoost uses two threads; no GPU is required. Fresh graph snapshots take longer than cached runs. The recorded cached full run took roughly 1–2 minutes on the execution host; this is not a laptop performance guarantee.
 
-Because Elliptic++ also contains multiple time steps, temporal evaluation can be explored to better reflect the challenge of detecting future illicit activity rather than only memorizing historical relationships.
+`requirements.txt` pins direct dependencies; `requirements-lock.txt` captures the original full environment. Seeds and split boundaries are in `config.json`. The run manifest records code/data evidence; all completed main experiments append to `reports/experiment_log.jsonl`. Diagnostics append separately. Reruns overwrite presentation tables with the latest run, while preserving the append-only logs. Notebooks are executed against persisted results rather than independently refitting models.
 
----
 
-## Decision Layer
+## Limitations and defensible claims
 
-The project will not end with:
+Temporal failure, unknown-label selection bias, coarse timing, incomplete graph coverage, unaudited source extraction/normalization, and absent label-maturation dates limit deployment conclusions. There is no prospective trial, monetary-loss measurement, wallet/entity holdout, calibrated probability model, or production service. The project demonstrates methodology and measured trade-offs.
 
-> **Risk probability = 0.83**
-
-A risk score needs to lead to an action.
-
-A simplified decision system can classify cases as:
-
-**Low Risk → Allow**
-
-**Intermediate Risk → Review**
-
-**High Risk → Escalate**
-
-The thresholds will be examined in terms of both illicit activity detected and legitimate transactions incorrectly flagged.
-
-This creates a more realistic trade-off between model performance and operational cost.
-
----
-
-## Tools
-
-The expected core stack is:
-
-**Python · SQL · PostgreSQL · pandas · scikit-learn · XGBoost · NetworkX · Neo4j · Plotly**
-
-A Graph Neural Network using PyTorch Geometric remains a **stretch extension**, not a requirement for completing the core project.
-
-It will only be added after the simpler graph approach has established a meaningful baseline.
-
----
-
-## Expected Outcome
-
-The finished project should answer:
-
-* how well transaction features detect illicit activity on their own,
-* what patterns become visible once transactions are treated as a network,
-* whether graph-derived features improve detection,
-* and what false-positive trade-offs accompany that improvement.
-
-The final question is therefore not simply:
-
-> **Can I train a fraud model?**
-
-It is:
-
-> **Does understanding who a transaction is connected to change the risk decision, and is that additional information valuable enough to use in practice?**
-
-That is the central idea behind FraudGraph.
-
-## Limitations
-
-The final project will consider class imbalance, graph leakage, changing fraud behavior, false positives, review capacity, and model drift.
+Start with [VERIFIED_PORTFOLIO_CLAIMS](VERIFIED_PORTFOLIO_CLAIMS.md), the [complete handoff and interview guide](HANDOFF.md), and [execution notes](reports/EXECUTION_NOTES.md). Every numerical result above comes from executed artifacts; no synthetic dataset substitutes for the real experiment.

@@ -1,0 +1,5 @@
+{
+  "train_validation_shared_local_fingerprints": 30,
+  "train_test_shared_local_fingerprints": 3,
+  "validation_test_shared_local_fingerprints": 9
+}

@@ -1,0 +1,10 @@
+split,class,count
+test,1,636
+test,2,10548
+test,3,35463
+train,1,2871
+train,2,23510
+train,3,94423
+validation,1,1038
+validation,2,7961
+validation,3,27319
