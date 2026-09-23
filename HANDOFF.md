@@ -97,32 +97,6 @@ Scientific problems were retained, not hidden: weak logistic baselines, a small 
 
 Named graph-model AP declines from 0.7070 on steps 40–43 to 0.0257 on 44–49, near prevalence. This alone prevents a production-readiness claim. Unknown-label selection bias, only ten test periods, coarse temporal resolution, missing label-maturity dates, incomplete observed topology, unverified source extraction/normalization, and no wallet/entity holdout further limit inference. These are scores, not calibrated probabilities. There is no deployment, measured economic benefit, or customer-level impact study. CI configuration is provided; only actual observed CI status should be claimed.
 
-## 12. Verified portfolio claims
-
-Read `VERIFIED_PORTFOLIO_CLAIMS.md` for the claim-to-evidence table. Safe claims include full-data validation, eight temporal comparisons, the qualified primary AP gain, honest sensitivity and drift findings, review-capacity accounting with unknown labels, executed SQL/graph parity, and tested explanations. Avoid claiming a GNN, real-time detection, PostgreSQL execution, 90% future precision, or prevented losses.
-
-## 13. Two resume bullets
-
-- Built a reproducible temporal fraud-risk pipeline on 203,769 Elliptic++ transactions and 234,355 edges; graph features improved named-attribute XGBoost test average precision from 0.424 to 0.524, with uncertainty and drift audits.
-- Evaluated eight model/feature configurations and analyst-capacity policies, capturing 273/636 known illicit test transactions at 5% per-period review capacity while preserving unknown labels and documenting severe late-period failure.
-
-## 14. Fifteen interview questions
-
-1. What exactly does the illicit label represent, and why is it not identical to customer fraud?
-2. Why must unknown outcomes remain unknown rather than become negative labels?
-3. Why use average precision instead of accuracy or only ROC-AUC?
-4. Why split by time, and what do steps 1–29 / 30–39 / 40–49 test?
-5. What is available at bucket close, and why is this not instantaneous detection?
-6. Which supplied features were excluded to make the transaction-only comparison honest?
-7. How do future-node and label-perturbation tests detect graph leakage?
-8. Why does preprocessing need to fit only on the training population?
-9. What do PageRank, neighbor degree, and component density mean here?
-10. Why does the graph benefit shrink when anonymized local features enter the baseline?
-11. Why do the final six periods invalidate a claim of stable future performance?
-12. What does the paired time-bucket bootstrap assume, and what can ten buckets not establish?
-13. How do fixed score bands differ from per-bucket top-K review queues?
-14. What can and cannot be inferred about precision, recall, and customer friction with unknown labels?
-15. What do permutation importance and TreeSHAP explain, and what would be needed before deployment?
 
 
 ## 15. Code review guide
