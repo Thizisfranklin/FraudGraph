@@ -15,7 +15,4 @@ Evidence run: `20260923T163139886696Z`. These are project outcomes, not a repres
 
 Do not claim a production deployment, real-time leakage-free authorization, 90% future precision, financial losses prevented, a GNN, PostgreSQL execution, customer-level fairness, or a universal benefit from graph features.
 
-## Resume bullets
 
-- Built a reproducible temporal fraud-risk pipeline on 203,769 Elliptic++ transactions and 234,355 edges; graph features improved named-attribute XGBoost test average precision from 0.424 to 0.524, with uncertainty and drift audits.
-- Evaluated eight model/feature configurations and analyst-capacity policies, capturing 273/636 known illicit test transactions at 5% per-period review capacity while preserving unknown labels and documenting severe late-period failure.
