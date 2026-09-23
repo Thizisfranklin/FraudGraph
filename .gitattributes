@@ -1,0 +1,14 @@
+# Source files use portable LF endings. Preserve generated evidence byte-for-byte
+# so SHA-256 manifests also verify after cloning on another operating system.
+* text=auto eol=lf
+*.png binary
+reports/*.csv -text
+reports/*.json -text
+reports/*.jsonl -text
+reports/*.txt -text
+notebooks/*.ipynb -text
+# Generated evidence remains available, but does not overwhelm the code review.
+reports/*.csv linguist-generated=true
+reports/*.json linguist-generated=true
+reports/*.jsonl linguist-generated=true
+reports/figures/* linguist-generated=true

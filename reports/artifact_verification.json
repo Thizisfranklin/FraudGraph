@@ -1,0 +1,44 @@
+{
+  "evidence_run": "20260923T163139886696Z",
+  "saved_ap_matches_predictions": true,
+  "source_hashes_match_executed_run": true,
+  "repeated_main_metrics_match": true,
+  "notebooks": [
+    {
+      "notebook": "01_data_understanding.ipynb",
+      "executed_code_cells": 3,
+      "sha256": "05f70b9059a2eadb3a474073a252f0231de42caecaccc0f4e53ad82631e3eac3"
+    },
+    {
+      "notebook": "02_eda.ipynb",
+      "executed_code_cells": 3,
+      "sha256": "2dfe9b9e33b63b9ea7b4201805d0094ddf46ad18960fc47567352e1b933ddb29"
+    },
+    {
+      "notebook": "03_transaction_baseline.ipynb",
+      "executed_code_cells": 3,
+      "sha256": "e1e837fdcd34605f695715ce591abce6975f666e7faadc9c4da4a17f23ffde74"
+    },
+    {
+      "notebook": "04_graph_analysis.ipynb",
+      "executed_code_cells": 3,
+      "sha256": "b51cf3d9158110528be57dcd71c88fe37480380410447330af9df31f9b900d3a"
+    },
+    {
+      "notebook": "05_graph_features.ipynb",
+      "executed_code_cells": 3,
+      "sha256": "e47da19870959158e67d0bfd831d06b2144b12ec6ed88ff3699801355ed461db"
+    },
+    {
+      "notebook": "06_model_comparison.ipynb",
+      "executed_code_cells": 4,
+      "sha256": "0e01e193b4fd73c0f1b5d964e27894a4af6029b37367e420717c3f65f778286e"
+    },
+    {
+      "notebook": "07_decision_analysis.ipynb",
+      "executed_code_cells": 4,
+      "sha256": "bb0910576eba77adf627b8cbf066fb5333150c2cdf6262a65b08e754a6ac304b"
+    }
+  ],
+  "main_ledger_records": 48
+}

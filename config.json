@@ -1,0 +1,10 @@
+{
+  "seed": 42,
+  "train_end": 29,
+  "validation_end": 39,
+  "review_fraction": 0.05,
+  "high_precision_target": 0.9,
+  "high_min_cases": 20,
+  "threads": 2,
+  "bootstrap_repetitions": 1000
+}

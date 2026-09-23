@@ -1,0 +1,4 @@
+risk_band,volume,known_illicit,known_licit,unknown
+HIGH,1679,291,76,1312
+LOW,44963,345,10472,34146
+REVIEW,5,0,0,5

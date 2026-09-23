@@ -1,0 +1,38 @@
+{
+  "named_logistic": {
+    "delta_ap": -0.02096821475466966,
+    "ci_95_low": -0.05524807218475343,
+    "ci_95_high": 0.013735520434277376,
+    "repetitions": 1000,
+    "valid_repetitions": 1000,
+    "unit": "time bucket",
+    "seed": 42
+  },
+  "named_xgboost": {
+    "delta_ap": 0.10003539569671638,
+    "ci_95_low": 0.0015009624671352357,
+    "ci_95_high": 0.13653736162826352,
+    "repetitions": 1000,
+    "valid_repetitions": 1000,
+    "unit": "time bucket",
+    "seed": 42
+  },
+  "extended_logistic": {
+    "delta_ap": -0.03334919521816071,
+    "ci_95_low": -0.10346625503119543,
+    "ci_95_high": 0.014624105499690045,
+    "repetitions": 1000,
+    "valid_repetitions": 1000,
+    "unit": "time bucket",
+    "seed": 42
+  },
+  "extended_xgboost": {
+    "delta_ap": 0.004875910341351819,
+    "ci_95_low": -0.0007969284315926677,
+    "ci_95_high": 0.011509488332357414,
+    "repetitions": 1000,
+    "valid_repetitions": 1000,
+    "unit": "time bucket",
+    "seed": 42
+  }
+}

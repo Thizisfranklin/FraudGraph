@@ -1,0 +1,16 @@
+{
+  "nodes": 203769,
+  "edges": 234355,
+  "directed": true,
+  "isolated": 0,
+  "weak_components": 49,
+  "largest_component": 7880,
+  "strong_components": 203769,
+  "degree_quantiles": {
+    "min": 1.0,
+    "median": 2.0,
+    "p95": 4.0,
+    "p99": 13.0,
+    "max": 473.0
+  }
+}
