@@ -1,34 +1,124 @@
 # FraudGraph
 
-## When does transaction-network context improve illicit-transaction prioritization?
+## Can transaction relationships reveal risk that individual transactions miss?
 
-FraudGraph is a temporal machine-learning study that tests whether the **relationships between transactions** provide useful risk information beyond the characteristics of individual transactions.
+FraudGraph is a temporal machine-learning study of the **Elliptic++ Bitcoin transaction network**.
 
-Using the full **Elliptic++ Bitcoin transaction graph**, I compare transaction-only models with models that also incorporate network structure such as PageRank, connectivity, neighborhood behavior, and graph-component characteristics.
+It began from a fairly simple curiosity: Bitcoin is often discussed in stories about scams, stolen funds and illicit finance, but the underlying transaction ledger is public. Bitcoin is therefore not "invisible" or literally untraceable — transactions can be observed on the blockchain — while the addresses involved are **pseudonymous** and do not automatically tell us who a real person is.
 
-The project is built around a practical risk-operations problem:
+That creates an interesting analytical question:
 
-> **If analysts can investigate only a small fraction of transaction traffic, can network context help them surface more known illicit activity — and will that improvement remain reliable on future transaction periods?**
+> **If a single transaction does not tell us enough, can the pattern of transactions around it provide additional risk signal?**
 
-### Main result
-
-For XGBoost using 15 interpretable transaction attributes:
-
-**Average Precision improved from `0.4239` to `0.5240` after graph features were added.**
-
-But the full experiment revealed two important qualifications:
-
-* with 93 additional anonymized transaction features, the graph improvement shrank to only **+0.0049 AP**
-* all boosted models deteriorated sharply during the final six test periods
-
-So the conclusion is not simply that *graphs improve fraud detection*.
-
-The evidence instead suggests:
-
-> **Network context can provide meaningful additional risk signal when transaction-level information is limited, but its value depends on the existing feature set and whether the learned patterns remain stable over time.**
+This project tests that idea with real network data and then pushes the question further: even if network features help a machine-learning model, do they help enough to improve **human analyst prioritization**, and do they remain reliable as transaction behavior changes over time?
 
 ---
 
+## Why I built this
+
+I initially considered building a more conventional customer or e-commerce fraud project. The problem was data quality: realistic customer-level financial behavior is difficult to obtain publicly because it is sensitive, and many easily accessible portfolio datasets are synthetic or heavily simplified.
+
+I wanted to work with something real.
+
+Elliptic++ gave me a harder but much more interesting alternative: a real Bitcoin transaction graph with **203,769 transactions**, **234,355 directed money-flow relationships**, and labels for a subset of transactions.
+
+I was already becoming interested in networks — how transactions, customers, firms or accounts can be understood not only as rows in a table but as **connected systems**. FraudGraph became my way of learning that idea by asking a practical risk question rather than building a graph simply because graph tools were available.
+
+The project therefore became a comparison between two ways of looking at the same transaction:
+
+- **Transaction view:** What are the characteristics of this transaction itself?
+- **Network view:** Where does this transaction sit in the surrounding flow of money, and what does its local structure look like?
+
+---
+
+# If you do not work with Bitcoin or graphs, start here
+
+Think of a normal machine-learning dataset as a spreadsheet:
+
+| Transaction | Amount | Fee | Size | Inputs | Outputs |
+|---|---:|---:|---:|---:|---:|
+| A | ... | ... | ... | ... | ... |
+| B | ... | ... | ... | ... | ... |
+
+That tells us about **A** and **B individually**.
+
+A transaction network adds the relationships:
+
+~~~mermaid
+flowchart LR
+    A[Transaction A] --> B[Transaction B]
+    C[Transaction C] --> B
+    B --> D[Transaction D]
+    B --> E[Transaction E]
+~~~
+
+In FraudGraph:
+
+| Graph concept | Meaning in this project |
+|---|---|
+| **Node** | A Bitcoin transaction |
+| **Directed edge** | A transaction-to-transaction money-flow relationship |
+| **Transaction features** | Amounts, fees, size, address counts and related attributes |
+| **Graph features** | Degree, PageRank, neighborhood structure and connected-component properties |
+| **Known label** | Illicit or licit where Elliptic++ provides ground truth |
+| **Unknown** | No known class label; never silently treated as legitimate |
+
+The central experiment asks whether adding the second view — **network context** — improves risk ranking beyond the transaction attributes alone.
+
+> **Terminology note:** despite the repository name, the Elliptic++ target is **illicit vs. licit transactions**. The project does not claim that every illicit label is equivalent to confirmed customer fraud, legal guilt or a measured financial loss.
+
+---
+
+# See the network before the metrics
+
+## A transaction whose score changed when network context was added
+
+<p align="center">
+  <img src="reports/figures/case_graph_uplift.png" width="780" alt="Transaction network case where graph context increased the risk score">
+</p>
+
+This is a bounded **one-hop neighborhood** around a known illicit test transaction.
+
+- **Red** = known illicit
+- **Blue** = known licit
+- **Gray** = unknown label
+- **Arrows** = directed transaction relationships
+- the larger labeled center node is the transaction being explained
+
+For this case, the transaction-only XGBoost model assigned a score of **0.2992**. After network features were added, the score increased to **0.6890**.
+
+That does not prove the surrounding network *caused* illicit behavior. It simply shows why the project became interesting: **the relationships changed what the model inferred from the same transaction.**
+
+---
+
+## The core model-and-operations view
+
+<p align="center">
+  <img src="reports/figures/model_comparison.png" width="950" alt="Precision recall and analyst review capacity comparison">
+</p>
+
+The left side compares **precision and recall** on the chronological test set. The right side asks a more operational question:
+
+> **If analysts can review only the highest-risk 1%, 2%, 5%, 10% or 20% of transaction traffic, how much known illicit activity do they actually surface?**
+
+That second chart matters because a fraud or financial-crime team does not experience a model as an AP score. It experiences **queues, investigation capacity, false positives and missed cases**.
+
+---
+
+# The project in four numbers
+
+| Result | Why it matters |
+|---|---|
+| **0.4239 → 0.5240 AP** | Graph context materially improved the primary XGBoost experiment |
+| **+0.0049 AP** with 93 extra local features | The incremental value of the graph almost disappeared when richer transaction information was already available |
+| **42.9%** known-illicit recall at a 5% review budget | Connects model ranking to analyst capacity |
+| **0.7070 → 0.0257 AP** across early vs. later test periods | Strong pooled performance hid severe temporal instability |
+
+So the project is not a simple "graph features win" story.
+
+> **Network information can add useful signal, but its value depends on what transaction information already exists, what model uses it, what analysts can review, and whether the learned patterns remain stable over time.**
+
+---
 # Project at a glance
 
 |                       |                                                                          |
@@ -420,16 +510,6 @@ It is more specific:
 
 > **The additional network information is useful to the nonlinear XGBoost model, but not to the linear baseline.**
 
-<p align="center">
-  <img src="reports/figures/model_comparison.png" width="950">
-</p>
-
-<p align="center">
-  <em>Left: temporal-test precision–recall curves. Right: known illicit recall as analyst review capacity increases.</em>
-</p>
-
----
-
 ## Uncertainty around the improvement
 
 The graph-vs-transaction AP difference was also evaluated using a paired bootstrap over **time buckets**, rather than treating individual transactions as independent observations.
@@ -685,14 +765,6 @@ The cases include:
 The final case is particularly useful because network context raises the model score from:
 
 **0.2992 → 0.6890**
-
-<p align="center">
-  <img src="reports/figures/case_graph_uplift.png" width="750">
-</p>
-
-<p align="center">
-  <em>One-hop neighborhood around the known illicit test transaction with the largest graph-driven score increase. Red = illicit, blue = licit, gray = unknown.</em>
-</p>
 
 Interactive Plotly versions are also generated for exploration.
 
