@@ -1,0 +1,4 @@
+# Only the small read-only viewer dependencies; no XGBoost or raw data needed.
+pandas==3.0.6
+plotly==7.1.0
+streamlit>=1.56,<2
