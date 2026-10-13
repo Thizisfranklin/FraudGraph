@@ -122,7 +122,7 @@ with tab_models:
         xaxis_title="", yaxis_range=[0, 1], legend_title_text="Feature context",
         margin=dict(t=20, b=10),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.warning(
         "Graph features are not uniformly beneficial. In the extended "
         "XGBoost comparison the gain is small, and logistic regression "
@@ -130,8 +130,8 @@ with tab_models:
         "results, not new experiments."
     )
     st.markdown(
-        "See [the methodology walkthrough](docs/UNDERSTAND_AND_CHECK.md) "
-        "and [leakage audit](reports/LEAKAGE_AUDIT.md) for model design."
+        "See [the methodology walkthrough](https://github.com/Thizisfranklin/FraudGraph/blob/main/docs/UNDERSTAND_AND_CHECK.md) "
+        "and [leakage audit](https://github.com/Thizisfranklin/FraudGraph/blob/main/reports/LEAKAGE_AUDIT.md) for model design."
     )
 
 with tab_workload:
@@ -181,24 +181,8 @@ with tab_workload:
         yaxis_title="Known illicit transactions in review queue",
         margin=dict(t=20, b=10),
     )
-    st.plotly_chart(cap_fig, use_container_width=True)
+    st.plotly_chart(cap_fig, width='stretch')
 
-    breakdown_fig = go.Figure(go.Bar(
-        x=["Selected review queue"] * 3,
-        y=[
-            chosen["known_illicit"], chosen["known_licit"],
-            chosen["unknown"],
-        ],
-        name="Cases by available label",
-        marker_color=["#b45309", "#2563eb", "#94a3b8"],
-        text=[
-            f"Known illicit: {chosen['known_illicit']:,}",
-            f"Known licit: {chosen['known_licit']:,}",
-            f"Unknown: {chosen['unknown']:,}",
-        ],
-        textposition="inside",
-    ))
-    # A single stacked column needs separate traces for a meaningful legend.
     breakdown_fig = go.Figure()
     for label, count in (
         ("Known illicit", chosen["known_illicit"]),
@@ -213,11 +197,11 @@ with tab_workload:
         barmode="stack", yaxis_title="Transactions reviewed",
         margin=dict(t=20, b=10),
     )
-    st.plotly_chart(breakdown_fig, use_container_width=True)
+    st.plotly_chart(breakdown_fig, width='stretch')
     st.caption(
         "This is a **top-K workload constraint**, not the fixed-score LOW / "
         "REVIEW / HIGH banding policy. No cost, loss avoided, or analyst "
-        "time has been estimated. See reports/DECISION_FRAMEWORK.md."
+        "time has been estimated. See the repository's decision framework."
     )
 
 with tab_time:
@@ -264,7 +248,7 @@ with tab_time:
         yaxis_title="Illicit share among known labels (%)",
         margin=dict(t=20, b=10),
     )
-    st.plotly_chart(fig2, use_container_width=True)
+    st.plotly_chart(fig2, width='stretch')
     st.warning(
         "The late-period decline is real in these saved test summaries, "
         "but the cause is not established. Changes in class prevalence, "
