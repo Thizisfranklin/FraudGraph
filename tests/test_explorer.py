@@ -5,7 +5,7 @@ import pytest
 
 from explorer_data import (
     capacity_at, comparison_ids, exact_row, known_illicit_total,
-    load_reports, test_ap, test_curve,
+    load_reports, test_ap as saved_test_ap, test_curve as saved_test_curve,
 )
 
 
@@ -21,8 +21,8 @@ def test_load_committed_reports():
 def test_primary_model_average_precision():
     reports = load_reports(ROOT / "reports")
     baseline, graph = comparison_ids("named", "xgboost")
-    assert test_ap(reports["results"], baseline) == pytest.approx(0.4239384)
-    assert test_ap(reports["results"], graph) == pytest.approx(0.5239738)
+    assert saved_test_ap(reports["results"], baseline) == pytest.approx(0.4239384)
+    assert saved_test_ap(reports["results"], graph) == pytest.approx(0.5239738)
 
 
 def test_all_traffic_workload_reconciliation():
@@ -41,7 +41,7 @@ def test_all_traffic_workload_reconciliation():
 
 def test_budget_levels_are_saved_not_interpolated():
     reports = load_reports(ROOT / "reports")
-    curve = test_curve(reports["review_capacity"], "named_xgboost_graph")
+    curve = saved_test_curve(reports["review_capacity"], "named_xgboost_graph")
     assert list(curve["capacity_fraction"]) == [.01, .02, .05, .1, .2]
     with pytest.raises(ValueError, match="Expected one"):
         capacity_at(
