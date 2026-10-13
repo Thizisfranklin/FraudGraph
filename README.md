@@ -62,7 +62,18 @@ The selected graph model's early-versus-late performance makes it inappropriate 
 
 ## Explore the work
 
-This project is an **analytical study**, not a hosted dashboard. The repository contains seven executed notebooks and saved reports, including:
+This project is an **analytical study**, not a live fraud product. Alongside seven executed notebooks and saved reports, the repository now includes a **local, read-only Streamlit explorer** that lets visitors compare models, analyst capacity and temporal reliability without rerunning training. It is not yet a hosted dashboard.
+
+**Try the interactive explorer locally:**
+
+```bash
+python -m pip install -r requirements-explorer.txt
+python -m streamlit run explorer.py
+```
+
+[Explorer guide and limitations](docs/EXPLORER.md)
+
+The research evidence is available here:
 
 - [Notebooks](notebooks) — the analysis from data exploration to graph features and model evaluation.
 - [Model comparisons and visualizations](reports/figures) — including examples of the actual transaction network.
@@ -90,6 +101,6 @@ The original data aren't redistributed here. For exact assumptions and run evide
 
 **Limitations:** labels are incomplete; risk scores are not calibrated probabilities; model performance changes sharply over time; no customer harm, money recovered or production effectiveness is measured. The network snapshots reflect what's observable at each time-bucket close, not real-time scoring.
 
-**Tools:** Python, pandas, NetworkX, XGBoost, scikit-learn, SQLite, matplotlib, Plotly and pytest.
+**Tools:** Python, pandas, NetworkX, XGBoost, scikit-learn, SQLite, matplotlib, Plotly, Streamlit and pytest.
 
 *Data: Elmougy & Liu (2023), [Elliptic++ authors' repository](https://github.com/git-disl/EllipticPlusPlus). “Illicit” is the dataset's transaction label; it isn't a claim of individual legal guilt.*
