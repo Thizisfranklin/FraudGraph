@@ -48,14 +48,26 @@ jobs:
         with:
           name: fraudgraph-investigator-app-build
           path: site
-      - name: Ensure GitHub Pages is configured for Actions
+      - name: Check whether the repository owner has enabled GitHub Pages
+        id: pages-check
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages" -f build_type=workflow 2>/dev/null || true
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" > /tmp/fraudgraph-pages.json 2>/dev/null; then
+            BUILD_TYPE=$(python -c "import json; print(json.load(open('/tmp/fraudgraph-pages.json')).get('build_type', ''))")
+            if [ "$BUILD_TYPE" = "workflow" ]; then
+              echo "enabled=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::React application built successfully, but GitHub Pages has not been enabled. Repository owner: Settings > Pages > Source: GitHub Actions; then rerun this workflow."
+      - if: steps.pages-check.outputs.enabled == 'true'
+        uses: actions/configure-pages@v5
+      - if: steps.pages-check.outputs.enabled == 'true'
+        uses: actions/upload-pages-artifact@v3
         with:
           path: site/
       - id: deploy
+        if: steps.pages-check.outputs.enabled == 'true'
         uses: actions/deploy-pages@v4
