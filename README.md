@@ -72,6 +72,12 @@ This project is an **analytical study**, not a hosted dashboard. The repository 
 
 A separate [temporal study](docs/TEMPORAL_DRIFT_STUDY.md) and [visual notebook](notebooks/08_temporal_drift.ipynb) investigate **why performance declined around time step 43**. The additions include feature/score/label drift diagnostics, post-hoc graph-feature ablations, and validation-selected forward-replay experiments with rolling and recency-weighted XGBoost. **No improvement is claimed without running and evaluating these new experiments.** The original saved results remain unchanged.
 
+### Model robustness and analyst-centered research
+
+The first temporal extension investigated changes in transaction attributes and labels, time-aware retraining, and graph-feature ablations. A follow-up [**robustness and analyst evaluation study**](docs/ROBUSTNESS_AND_ANALYST_EVALUATION.md) now tests **underfitting and overfitting controls** (simple vs regularized vs higher-capacity XGBoost), hypothetical **2/4/6-bucket label delays**, and ranking usefulness when analysts can review only **1%, 5%, or 10% of all transactions**. All comparisons use earlier validation periods for selection.
+
+The new [**offline interactive research dashboard**](scripts/build_research_dashboard.py) visualizes performance gaps, drift and review budgets, while the [**analyst workbench roadmap**](docs/ANALYST_WORKBENCH_ROADMAP.md) sketches a possible future human-in-the-loop app. **No live fraud verdict or deployed Bitcoin wallet checker is claimed.** See [the GitHub Actions workflow](.github/workflows/robustness-research.yml) to generate the new reports; no new performance improvement is asserted before those experiments run.
+
 ### Reproduce the analysis
 
 Use **Python 3.12**. The original transaction source files are substantial (about 702 MB), so allow disk space and download time.
