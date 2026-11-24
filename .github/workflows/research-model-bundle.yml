@@ -1,0 +1,44 @@
+name: Package validation-selected research model
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/build_selected_research_model.py'
+      - 'scripts/score_research_batch.py'
+      - '.github/workflows/research-model-bundle.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fraudgraph-research-model-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-research-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install source project
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install --no-deps -e .
+      - name: Run model-safety tests
+        run: python -m pytest -q tests/test_research_model_bundle.py
+      - name: Reproduce as-of engineered training features
+        run: python -m fraudgraph.pipeline --download
+      - name: Train selected experimental model for hypothetical bucket 50
+        run: python scripts/build_selected_research_model.py
+      - name: Upload versioned pipeline and explicit limitations
+        uses: actions/upload-artifact@v4
+        with:
+          name: fraudgraph-research-model-bundle
+          path: models/research_candidate/
+          retention-days: 30
+          if-no-files-found: error

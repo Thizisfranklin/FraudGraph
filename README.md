@@ -10,6 +10,14 @@ The goal isn't to declare someone guilty or automatically block transactions. It
 
 *One selected example: a known-illicit test transaction scored **0.299** using its own attributes and **0.689** after adding graph features. It's a useful illustration, not proof that every transaction improves.*
 
+## Open FraudGraph Investigator
+
+**[Launch the interactive React application](https://thizisfranklin.github.io/FraudGraph/)** · [App source and setup](app/README.md)
+
+FraudGraph Investigator is a transaction-review workspace, not just a chart gallery. Search real Elliptic++ case examples, inspect bounded directed Bitcoin transaction neighborhoods, compare graph and transaction-only model scores, examine saved explanations, and record or export a human-review decision. This research prototype **does not accept arbitrary live Bitcoin wallet addresses or make fraud verdicts**.
+
+The app is deployed from GitHub Actions when Pages is enabled; if that public URL has not been activated yet, use the [app setup instructions](app/README.md).
+
 ## What am I actually analyzing?
 
 Bitcoin transactions are public on the blockchain, but an address doesn't automatically identify its real-world owner. Elliptic++ provides a transaction network, attributes and known illicit/licit labels for only some transactions.
@@ -62,21 +70,31 @@ The selected graph model's early-versus-late performance makes it inappropriate 
 
 ## Explore the work
 
-This project is an **analytical study**, not a hosted dashboard. The repository contains seven executed notebooks and saved reports, including:
+This repository includes a complete reproducible data science investigation and a React-based human-review prototype. It also contains executed notebooks and saved reports, including:
 
 - [Notebooks](notebooks) — the analysis from data exploration to graph features and model evaluation.
 - [Model comparisons and visualizations](reports/figures) — including examples of the actual transaction network.
 - [Understand and verify FraudGraph](docs/UNDERSTAND_AND_CHECK.md) — a plain-English walkthrough of the methods, checks and limitations.
 
-### Temporal drift and retraining research (exploratory)
+### Beyond a single AP score: what the follow-up research found
 
-A separate [temporal study](docs/TEMPORAL_DRIFT_STUDY.md) and [visual notebook](notebooks/08_temporal_drift.ipynb) investigate **why performance declined around time step 43**. The additions include feature/score/label drift diagnostics, post-hoc graph-feature ablations, and validation-selected forward-replay experiments with rolling and recency-weighted XGBoost. **No improvement is claimed without running and evaluating these new experiments.** The original saved results remain unchanged.
+**Model degradation:** The primary graph-based XGBoost model dropped sharply in ranking quality around **time step 43**. Transaction-only models also deteriorated, so the failure cannot be blamed solely on graph features. The share of known illicit labels changed at the same time; this is evidence of instability, not a verified cause of concept drift. [Read the actual temporal findings](docs/BASELINE_TEMPORAL_FINDINGS.md).
 
-### Model robustness and analyst-centered research
+**Adaptive model comparison:** We tested frozen, expanding-history, rolling-window and recency-weighted approaches under hypothetical label delays. A prespecified follow-up comparison tested shallow, regularized, and higher-capacity XGBoost models on forward validation periods **35, 37 and 39**, selecting by worst-period AP rather than a pooled score.
 
-The first temporal extension investigated changes in transaction attributes and labels, time-aware retraining, and graph-feature ablations. A follow-up [**robustness and analyst evaluation study**](docs/ROBUSTNESS_AND_ANALYST_EVALUATION.md) now tests **underfitting and overfitting controls** (simple vs regularized vs higher-capacity XGBoost), hypothetical **2/4/6-bucket label delays**, and ranking usefulness when analysts can review only **1%, 5%, or 10% of all transactions**. All comparisons use earlier validation periods for selection.
+| Assumed label delay | Validation-selected configuration | Mean AP | Worst-period AP |
+| --- | --- | ---: | ---: |
+| 2 buckets | **Expanding history**, XGBoost depth 3, 150 trees | **0.8140** | **0.7503** |
+| 4 buckets | Frozen higher-capacity XGBoost | 0.8158 | 0.7231 |
+| 6 buckets | Frozen higher-capacity XGBoost | 0.8158 | 0.7231 |
 
-The new [**offline interactive research dashboard**](scripts/build_research_dashboard.py) visualizes performance gaps, drift and review budgets, while the [**analyst workbench roadmap**](docs/ANALYST_WORKBENCH_ROADMAP.md) sketches a possible future human-in-the-loop app. **No live fraud verdict or deployed Bitcoin wallet checker is claimed.** See [the GitHub Actions workflow](.github/workflows/robustness-research.yml) to generate the new reports; no new performance improvement is asserted before those experiments run.
+The two-bucket expanding-history candidate is the **documented research preference under that specific availability assumption**, because it achieved the better worst-fold result in that scenario. True label-maturation dates are not present, so changing the delay is **not** a way to tune a production model. Training AP versus forward AP also helps diagnose possible overfitting or underfitting, but drift and selective labels can create gaps too.
+
+**Analyst workload:** With the validation-selected two-step model and capacity limited to **5% of all transactions** in those three validation periods, 580 cases were selected: **184 known illicit**, **2 known licit**, and **394 unknown**. This is useful prioritization evidence, not confirmed recall among all illicit activity.
+
+**Critical limitation:** The later steps 40–49 had already been examined before the adaptation hypotheses were chosen. The additional retrospective results are **post-hoc**, not an untouched prospective test. The three published app examples display **original saved frozen-model scores**, not predictions secretly generated by the adaptation candidate. No system is presented as a verified live Bitcoin fraud detector.
+
+[Experimental protocol and checks](docs/ROBUSTNESS_AND_ANALYST_EVALUATION.md) · [Temporal drift notebook](notebooks/08_temporal_drift.ipynb) · [Analyst application architecture](docs/ANALYST_WORKBENCH_ROADMAP.md)
 
 ### Reproduce the analysis
 

@@ -1,0 +1,61 @@
+name: Investigator React app - build and deploy
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+      - '.github/workflows/investigator-web.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/investigator-web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install React application dependencies
+        working-directory: app
+        run: npm install --no-audit --no-fund
+      - name: Build production-ready application
+        working-directory: app
+        run: npm run build
+      - name: Upload app build
+        uses: actions/upload-artifact@v4
+        with:
+          name: fraudgraph-investigator-app-build
+          path: app/dist/
+          retention-days: 30
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fraudgraph-investigator-app-build
+          path: site
+      - name: Ensure GitHub Pages is configured for Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${GITHUB_REPOSITORY}/pages" -f build_type=workflow 2>/dev/null || true
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+      - id: deploy
+        uses: actions/deploy-pages@v4
