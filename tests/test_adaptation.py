@@ -50,3 +50,18 @@ def test_unknowns_cannot_enter_training(history):
 
 def test_specs_produce_stable_identifiers():
     assert Specification("rolling", 3, 150).name == "rolling_depth3_trees150_lr0.05"
+
+
+def test_forward_model_fit_has_no_future_labels():
+    from fraudgraph.adaptation import evaluate_target
+    rng = np.random.default_rng(42)
+    frame = pd.DataFrame({
+        "Time step": np.repeat(np.arange(1, 10), 12),
+        "y": np.tile(np.arange(12) % 2, 9).astype(float),
+        "amount": rng.normal(size=108),
+    })
+    spec = Specification("expanding", max_depth=2, n_estimators=10)
+    outcome = evaluate_target(frame, 8, ["amount"], spec, label_lag=2)
+    assert outcome["last_training_step"] == 6
+    assert outcome["evaluated_labeled"] == 12
+    assert 0 <= outcome["ap"] <= 1
