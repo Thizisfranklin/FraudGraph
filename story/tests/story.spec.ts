@@ -14,6 +14,8 @@ test("all real chapters render, evidence is accessible, and the breakdown is int
  await page.keyboard.press("ArrowRight");
  await page.keyboard.press("ArrowRight");
  await expect(page.locator(".chapter-6 .huge-score")).toHaveText("0.0265");
+ await page.locator(".chapter-6").scrollIntoViewIfNeeded();
+ await page.waitForTimeout(450);
  await page.screenshot({path:"test-results/neon-ledger-collapse.png",fullPage:false});
  expect(errors).toEqual([]);
 });
