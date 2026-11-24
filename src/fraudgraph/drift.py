@@ -25,8 +25,13 @@ def population_stability_index(reference, current, bins=10, epsilon=1e-6):
     if not len(af):
         return float("nan")
     edges = np.unique(np.quantile(af, np.linspace(0, 1, bins + 1)))
-    # Infinite endpoints retain out-of-range observations.
-    boundaries = np.r_[-np.inf, edges[1:-1], np.inf]
+    # With constant historical data, explicitly detect values beyond its support.
+    if len(edges) == 1:
+        v = float(edges[0])
+        delta = max(abs(v) * 1e-6, 1e-6)
+        boundaries = np.array([-np.inf, v - delta, v + delta, np.inf])
+    else:
+        boundaries = np.r_[-np.inf, edges[1:-1], np.inf]
     ac = np.histogram(af, bins=boundaries)[0].astype(float)
     bc = np.histogram(bf, bins=boundaries)[0].astype(float)
     ac = np.r_[ac, len(a) - len(af)]
