@@ -1,9 +1,5 @@
 name: Build real Investigator case data
 on:
-  pull_request:
-    paths:
-      - 'scripts/export_investigator_samples.py'
-      - '.github/workflows/investigator-cases.yml'
   workflow_dispatch:
 
 permissions:
