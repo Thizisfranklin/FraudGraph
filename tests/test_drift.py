@@ -32,3 +32,10 @@ def test_drift_summary_excludes_unknown_from_prevalence_and_ap():
     assert result.loc[40, "average_precision_labeled"] == 1.
     assert result.loc[40, "unknown"] == 1
     assert np.isnan(result.loc[43, "average_precision_labeled"])
+
+
+def test_constant_reference_can_detect_new_values():
+    base = np.full(50, 4.0)
+    newer = np.full(50, 5.0)
+    assert population_stability_index(base, base) == 0.
+    assert population_stability_index(base, newer) > 0.
