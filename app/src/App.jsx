@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import ReactFlow, { Background, Controls, MiniMap, MarkerType } from "@xyflow/react";
+import { ReactFlow, Background, Controls, MiniMap, MarkerType } from "@xyflow/react";
 import {
   Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, CheckCircle2,
   ChevronRight, CircleHelp, ClipboardCheck, Copy, Download, ExternalLink,
