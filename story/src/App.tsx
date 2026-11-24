@@ -4,6 +4,7 @@ import {Activity,ArrowDown,ArrowRight,BookOpen,ChevronDown,ChevronRight,External
  Gamepad2,Headphones,Info,Menu,Radio,Search,ShieldAlert,Smartphone,
  Sparkles,Volume2,VolumeX,X} from "lucide-react";
 import {data} from "./data/data";
+import NeonFM from "./components/NeonFM";
 import {Entrance,OneTransaction,TheNetwork,TheUplift,ItDepends,AnalystQueue,PlotTwist} from "./ActOne";
 import {WhyBreak,RetrainingLoop,StressTests,AnalystBudgets,Workbench,Takeaway} from "./ActTwo";
 import {count,sourceUrl} from "./components/Common";
@@ -158,6 +159,7 @@ export default function App(){
        <button className="hud-icon mobile-menu" aria-label="Open chapter navigation" onClick={()=>setNavOpen(true)}><Menu size={21}/></button>
       </div>
    </header>
+   <NeonFM chapter={active}/>
    <aside className={"chapter-nav "+(navOpen?"open":"")} aria-label="Chapter navigation">
       <div className="nav-heading"><span>THE DESCENT</span><button onClick={()=>setNavOpen(false)} className="nav-close" aria-label="Close chapters"><X size={17}/></button></div>
       <div className="nav-scroll">{data.chapters.map(ch=><button key={ch.id} onClick={()=>navigate(ch.id)} className={"nav-chapter "+(active===ch.id?"active":"")} aria-current={active===ch.id?"step":undefined}><span className="nav-bullet"/><span>{String(ch.id).padStart(2,"0")}</span><strong>{ch.name}</strong></button>)}</div>
