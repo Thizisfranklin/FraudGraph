@@ -68,6 +68,10 @@ This project is an **analytical study**, not a hosted dashboard. The repository 
 - [Model comparisons and visualizations](reports/figures) — including examples of the actual transaction network.
 - [Understand and verify FraudGraph](docs/UNDERSTAND_AND_CHECK.md) — a plain-English walkthrough of the methods, checks and limitations.
 
+### Temporal drift and retraining research (exploratory)
+
+A separate [temporal study](docs/TEMPORAL_DRIFT_STUDY.md) and [visual notebook](notebooks/08_temporal_drift.ipynb) investigate **why performance declined around time step 43**. The additions include feature/score/label drift diagnostics, post-hoc graph-feature ablations, and validation-selected forward-replay experiments with rolling and recency-weighted XGBoost. **No improvement is claimed without running and evaluating these new experiments.** The original saved results remain unchanged.
+
 ### Reproduce the analysis
 
 Use **Python 3.12**. The original transaction source files are substantial (about 702 MB), so allow disk space and download time.
