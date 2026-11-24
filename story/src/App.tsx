@@ -118,6 +118,10 @@ export default function App(){
    if(event.pointerType!=="mouse")return;
    document.documentElement.style.setProperty("--cursor-x",event.clientX+"px");
    document.documentElement.style.setProperty("--cursor-y",event.clientY+"px");
+   const label=document.getElementById("cursor-label");
+   const target=event.target instanceof Element?event.target:null;
+   const hint=target?.closest("button,a,input,select")?"POKE IT":"FALL IN";
+   if(label&&label.textContent!==hint)label.textContent=hint;
   };
   window.addEventListener("pointermove",handler,{passive:true});
   return()=>window.removeEventListener("pointermove",handler);
@@ -142,7 +146,7 @@ export default function App(){
   <StressTests play={play}/>,<AnalystBudgets play={play}/>,<Workbench/>,<Takeaway/>
  ];
  return <div className={"neon-ledger "+(play?"mode-play":"mode-read")+(chaos?" chaos-mode":"")} data-theme={theme}>
-   <Vortex reduce={reduce}/><div className="scanline-layer" aria-hidden/><div className="cursor-glow" aria-hidden/>
+   <Vortex reduce={reduce}/><div className="scanline-layer" aria-hidden/><div className="cursor-glow" aria-hidden/><div id="cursor-label" className="cursor-label" aria-hidden>FALL IN</div>{!reduce&&<motion.div key={theme} className="theme-transition-wipe" initial={{clipPath:"circle(0% at 90% 4%)",opacity:.13}} animate={{clipPath:"circle(170% at 90% 4%)",opacity:0}} transition={{duration:.7,ease:"easeOut"}} aria-hidden/>}
    <motion.div className="top-progress" style={{scaleX:progress}}/>
    <header className="hud"><button className="brand-button" onClick={clickLogo} aria-label="FraudGraph logo. Click repeatedly for hidden theme." title="FraudGraph">
       <span className="brand-icon">◈</span><span>FRAUD<span>GRAPH</span></span></button>
@@ -159,7 +163,7 @@ export default function App(){
       <div className="nav-scroll">{data.chapters.map(ch=><button key={ch.id} onClick={()=>navigate(ch.id)} className={"nav-chapter "+(active===ch.id?"active":"")} aria-current={active===ch.id?"step":undefined}><span className="nav-bullet"/><span>{String(ch.id).padStart(2,"0")}</span><strong>{ch.name}</strong></button>)}</div>
       <div className="nav-settings"><button aria-pressed={play} onClick={()=>setPlay(v=>!v)}><Gamepad2 size={16}/> {play?"Play mode":"Read mode"} <span>SWITCH</span></button><button onClick={()=>navigate(Math.min(active+1,data.chapters.length-1))}>Skip ahead <ArrowRight size={14}/></button></div>
    </aside>
-   <div className="corner-minimap" role="img" aria-label={"Current chapter "+String(active)+": "+data.chapters[active]?.name}><div className="minimap-rings"><span/><span/><span/><i/></div><small>DEPTH {String(active).padStart(2,"0")}</small></div>
+   <div className="corner-minimap" role="img" aria-label={"Actual observed three-node example network. Current chapter "+String(active)+": "+data.chapters[active]?.name}><svg viewBox="0 0 100 100" aria-hidden><line x1="22" y1="50" x2="49" y2="50" stroke="var(--teal)" strokeWidth="2"/><line x1="49" y1="50" x2="78" y2="28" stroke="var(--teal)" strokeWidth="2"/><line x1="49" y1="50" x2="78" y2="77" stroke="var(--pink)" strokeWidth="2"/>{[["22","50"],["78","28"],["78","77"]].slice(0,Math.min(3,data.investigator.find(x=>x.caseType==="graph_uplift")?.network.nodes.length||3)).map(([x,y],i)=><circle key={i} cx={x} cy={y} r="6" fill={i===0?"var(--pink)":"var(--teal)"}/>)}<circle cx="49" cy="50" r="9" fill="var(--pink)"/></svg><small>DEPTH {String(active).padStart(2,"0")}</small></div>
    <main id="story-main">{data.chapters.map((chapter,index)=><section key={chapter.id} id={"chapter-"+chapter.id} data-chapter={chapter.id} className={"chapter chapter-"+chapter.id+(chapter.id===0?" hero-chapter":"")} aria-label={"Chapter "+chapter.id+": "+chapter.name}>
       {chapters[index]}{index>0&&index<data.chapters.length-1&&<div className="chapter-end"><span>{play?"MISSION FILE":"RESEARCH CHAPTER"} {String(index).padStart(2,"0")} / {chapter.name}</span><button onClick={()=>navigate(index+1)}>DESCEND DEEPER <ArrowDown size={14}/></button></div>}
    </section>)}</main>
