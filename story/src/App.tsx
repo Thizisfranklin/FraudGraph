@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from "react";
 import {motion,useScroll,useSpring,useTransform,useReducedMotion} from "framer-motion";
 import {Activity,ArrowDown,ArrowRight,BookOpen,ChevronDown,ChevronRight,ExternalLink,
- Gamepad2,Headphones,HeadphonesOff,Info,Menu,Radio,Search,ShieldAlert,Smartphone,
+ Gamepad2,Headphones,Info,Menu,Radio,Search,ShieldAlert,Smartphone,
  Sparkles,Volume2,VolumeX,X} from "lucide-react";
 import {data} from "./data/data";
 import {Entrance,OneTransaction,TheNetwork,TheUplift,ItDepends,AnalystQueue,PlotTwist} from "./ActOne";
