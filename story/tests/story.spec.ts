@@ -4,6 +4,7 @@ test("all real chapters render, evidence is accessible, and the breakdown is int
  await page.goto("/");
  await expect(page.locator("section[data-chapter]")).toHaveCount(13);
  await expect(page.getByRole("button",{name:/ENTER THE LEDGER/})).toBeVisible();
+ await page.screenshot({path:"test-results/neon-ledger-desktop.png",fullPage:false});
  await page.locator(".nav-chapter").nth(6).click();
  await expect(page.locator(".chapter-6 .section-heading h2")).toContainText("model fumbled");
  const number=await page.locator(".chapter-6 .huge-score").innerText();
@@ -13,6 +14,7 @@ test("all real chapters render, evidence is accessible, and the breakdown is int
  await page.keyboard.press("ArrowRight");
  await page.keyboard.press("ArrowRight");
  await expect(page.locator(".chapter-6 .huge-score")).toHaveText("0.0265");
+ await page.screenshot({path:"test-results/neon-ledger-collapse.png",fullPage:false});
  expect(errors).toEqual([]);
 });
 test("theme, evidence vault, play/read and keyboard affordances",async({page})=>{
@@ -34,4 +36,5 @@ test("responsive navigation and reduced-motion setting",async({page})=>{
  await page.getByRole("button",{name:"Open chapter navigation"}).click();
  await expect(page.locator(".chapter-nav")).toHaveClass(/open/);
  await expect(page.locator(".vortex-background")).toBeHidden();
+ await page.screenshot({path:"test-results/neon-ledger-mobile.png",fullPage:false});
 });
