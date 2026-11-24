@@ -9,17 +9,26 @@ function example(){
  const original=data.originalCases.find(c=>c.case==="graph_uplift");
  return data.investigator.find(c=>c.id===String(original?.txId))||data.investigator[0];
 }
-export function Entrance({onEnter,play}:{onEnter:()=>void;play:boolean}){
+export function Entrance({onEnter,onResults,play}:{onEnter:()=>void;onResults:()=>void;play:boolean}){
+ const row=data.originalResults.find(r=>r.experiment_id==="named_xgboost_tx"&&r.split==="test");
+ const graph=data.originalResults.find(r=>r.experiment_id==="named_xgboost_graph"&&r.split==="test");
  return <div className="entrance-scene">
  <div className="sky-art" aria-hidden="true"><div className="grain-sun"/><div className="sky-cloud cloud-1"/><div className="sky-cloud cloud-2"/>
  <svg className="skyline" viewBox="0 0 1000 350" preserveAspectRatio="xMidYMax slice"><path fill="#1c1742" d="M0 230h42V130h33v90h23V80h30v140h31v-40h32V90h31v140h36V145h30v80h20V60h28v170h37V120h34v110h24V165h35V98h25v130h33V80h35v140h20V160h31v65h25V112h40v113h28V65h38v160h25V120h37v105h20V180h30V88h42v150h26V150h24v80h25V120h37v110h25V174h38v180H0Z"/><path fill="#120f29" d="M0 290h65v-60h45v40h40v-80h33v100h50V235h35v75h60v-84h35v65h37v-42h35v60h42v-80h40v75h35v-95h49v85h30v-62h35v90h56v-100h35v70h52v-42h30v60h60v-130h35v110h35v-70h45v100h30v-48h48v90H0Z"/></svg>
  <svg className="palm palm-left" viewBox="0 0 160 300"><path d="M82 290Q70 154 83 76" stroke="#080c20" strokeWidth="12" fill="none"/><g fill="none" stroke="#080c20" strokeWidth="18" strokeLinecap="round"><path d="M81 76Q30 36 8 80"/><path d="M81 76Q12 5 6 22"/><path d="M81 76Q70 0 44 7"/><path d="M81 76Q129 8 151 29"/><path d="M81 76Q139 56 152 102"/><path d="M81 76Q103 22 89 6"/></g></svg>
  <svg className="palm palm-right" viewBox="0 0 160 300"><path d="M82 290Q92 160 78 76" stroke="#080c20" strokeWidth="12" fill="none"/><g fill="none" stroke="#080c20" strokeWidth="18" strokeLinecap="round"><path d="M78 76Q22 30 10 78"/><path d="M78 76Q5 8 6 29"/><path d="M78 76Q63 0 40 6"/><path d="M78 76Q140 10 152 25"/><path d="M78 76Q151 60 153 106"/><path d="M78 76Q103 20 93 6"/></g></svg><div className="rain-road"/><div className="road-stripe"/></div>
- <div className="entrance-copy"><div className="eyebrow"><span className="pulse-dot"/> A DATA SCIENCE STORY / ELLIPTIC++</div>
- <motion.h1 initial={{opacity:0,y:35}} animate={{opacity:1,y:0}} transition={{duration:1}}><span className="chrome">FRAUD</span><span className="neon">GRAPH.</span></motion.h1>
- <p className="hero-subtitle">One Bitcoin transaction can look ordinary on its own.<br/><strong>But what changes when you follow the connections?</strong></p>
- <div className="hero-buttons"><button className="hero-action" onClick={onEnter}>ENTER THE LEDGER <ArrowDown size={19}/></button><span className="microcopy">{play?"Investigation unlocked. No fictional outcomes.":"Follow the evidence. Not the hype."}</span></div></div>
- <div className="entrance-bottom"><span>AN ANALYST'S INTERACTIVE CASE FILE</span><span>SCROLL TO DESCEND ↓</span></div></div>;
+ <div className="entrance-copy"><div className="eyebrow">A REPRODUCIBLE ML INVESTIGATION / ELLIPTIC++</div>
+ <motion.h1 initial={{opacity:0,y:18}} animate={{opacity:1,y:0}} transition={{duration:.55}}><span className="chrome">FRAUD</span><span className="neon">GRAPH.</span></motion.h1>
+ <p className="hero-subtitle">Can a transaction look ordinary until you see its connections?</p>
+ <p className="hero-explainer">I compared transaction-only and graph-enhanced models on a real Bitcoin transaction network, then tested whether the results held up over time.</p>
+ <div className="hero-briefing" aria-label="Research at a glance">
+  <div><span>THE QUESTION</span><strong>Does network context help?</strong><small>Compare the same transactions with and without graph features.</small></div>
+  <div><span>THE FINDING</span><strong>{row&&graph?`${m(row.pr_auc_ap,4)} → ${m(graph.pr_auc_ap,4)} AP`:"See the recorded results"}</strong><small>Named-feature XGBoost, held-out test. Not a universal improvement. <a href={data.repository+"/blob/main/reports/results.csv"} target="_blank" rel="noreferrer">Source ↗</a></small></div>
+  <div><span>THE TWIST</span><strong>Performance later collapsed</strong><small>Chronological results challenge the apparent uplift. <a href={data.repository+"/blob/main/reports/test_by_time.csv"} target="_blank" rel="noreferrer">Source ↗</a></small></div>
+ </div>
+ <div className="hero-buttons"><button className="hero-action" onClick={onEnter}>EXPLORE A REAL CASE <ArrowDown size={18}/></button><button className="hero-secondary-action" onClick={onResults}>GO STRAIGHT TO THE FINDINGS <ArrowDown size={16}/></button></div>
+ <p className="hero-boundary">Offline historical study · Dataset labels are not accusations · No live transaction lookup</p></div>
+ <div className="entrance-bottom"><span>REAL EVIDENCE. VISIBLE LIMITATIONS.</span><span>SCROLL OR CHOOSE YOUR PATH ↓</span></div></div>;
 }
 export function OneTransaction(){
  const record=example(),[view,setView]=useState<"row"|"label"|"timing">("row");

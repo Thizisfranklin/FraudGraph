@@ -3,7 +3,9 @@ test("all real chapters render, evidence is accessible, and the breakdown is int
  const errors:string[]=[];page.on("pageerror",e=>errors.push(String(e)));
  await page.goto("/");
  await expect(page.locator("section[data-chapter]")).toHaveCount(13);
- await expect(page.getByRole("button",{name:/ENTER THE LEDGER/})).toBeVisible();
+ await expect(page.getByRole("button",{name:/EXPLORE A REAL CASE/})).toBeVisible();
+ await expect(page.getByRole("button",{name:/GO STRAIGHT TO THE FINDINGS/})).toBeVisible();
+ await expect(page.locator(".hero-briefing > div")).toHaveCount(3);
  await page.screenshot({path:"test-results/neon-ledger-desktop.png",fullPage:false});
  await page.locator(".nav-chapter").nth(6).click();
  await expect(page.locator(".chapter-6 .section-heading h2")).toContainText("model fumbled");
