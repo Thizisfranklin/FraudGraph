@@ -100,6 +100,60 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+
+  audit:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install audit dependencies
+        working-directory: story
+        run: npm install --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: fraudgraph-neon-ledger-city-app
+          path: story/dist/
+      - name: Install Chrome for keyboard, mobile and accessibility smoke checks
+        working-directory: story
+        run: npx playwright install --with-deps chromium
+      - name: Test chapter interactions in a real browser
+        working-directory: story
+        run: npm run test:ui
+      - name: Lighthouse performance / accessibility audit
+        working-directory: story
+        continue-on-error: true
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/fraudgraph-story-preview.log 2>&1 &
+          sleep 3
+          export CHROME_PATH="$(find "$HOME/.cache/ms-playwright" -type f \( -name chrome-headless-shell -o -name chrome \) | head -1)"
+          if [ ! -x "$CHROME_PATH" ]; then
+            echo "::warning::Chrome binary not accessible for Lighthouse; browser interaction and static contrast tests remain authoritative."
+            exit 0
+          fi
+          npx --yes lighthouse@12 http://127.0.0.1:4173 \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --only-categories=performance,accessibility,best-practices \
+            --output=json --output-path=dist/lighthouse.json --quiet
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-ledger-city-browser-audit
+          path: |
+            story/playwright-report/
+            story/test-results/
+            story/dist/lighthouse.json
+          if-no-files-found: warn
+
+
   deploy:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: build
