@@ -49,6 +49,8 @@ def read_csv(path):
         for key, value in list(row.items()):
             if value is None or value == "":
                 row[key] = None
+            elif value.lower() in {"nan", "null", "none", "inf", "-inf", "infinity", "-infinity"}:
+                row[key] = None
             elif re.fullmatch(r"[+-]?\d+", value):
                 row[key] = int(value)
             else:
@@ -241,31 +243,67 @@ def main():
         },
     }
     preamble = """/* GENERATED — do not edit manually.
- * Rebuild from tracked source reports + completed GitHub Actions experiments.
- * All research numbers in this story must originate here.
+ * Built from pinned original reports and historical GitHub Actions artifacts.
+ * ALL numerical research evidence used by components must come from here.
  */
-export type EvidenceScope =
-  | "original-report" | "temporal-validation" | "temporal-posthoc"
-  | "robustness-validation" | "investigator-reproduction";
-export type VerifiedMetric = {
-  status:"verified"; value:number; source:string; scope:string; unit:string;
-};
-export type AwaitingMetric = {
-  status:"awaiting"; value:null; display:"-- awaiting data --"; reason:string;
-};
+export type EvidenceScope = "original-report" | "temporal-validation" | "temporal-posthoc" | "robustness-validation" | "investigator-reproduction";
+export type VerifiedMetric = {status:"verified";value:number;source:string;scope:string;unit:string};
+export type AwaitingMetric = {status:"awaiting";value:null;display:"-- awaiting data --";reason:string};
 export type Metric = VerifiedMetric | AwaitingMetric;
+export type AnyRow = Record<string,string|number|null>;
+export type TimeRow = {experiment_id:string;time_step:number;labeled:number;illicit:number;ap:number};
+export type ClassRow = {"Time step":number;Illicit:number;Licit:number;Unknown:number};
+export type ResultRow = {experiment_id:string;split:string;model:string;pr_auc_ap:number;precision:number;recall:number;f1:number};
+export type CapacityRow = {scope:string;capacity_fraction:number;reviewed:number;known_illicit:number;known_licit:number;unknown:number;experiment_id:string;split:string};
+export type CaseRow = {case:string;txId:number;time_step:number;class:number;score:number;baseline_score:number;neighbors_total:number;neighbors_shown:number};
 export type TransactionCase = {
-  id:string; timeStep:number; retrospectiveClass:number;
-  caseType:string; scores:{graph:number;transaction:number};
+  id:string;timeStep:number;retrospectiveClass:number;caseType:string;
+  scores:{graph:number;transaction:number};
   features:Record<string,number|null>;
   shapLogOdds:Record<string,number>;
   network:{nodes:Array<{id:string;label:string;retrospectiveClass:number;focus:boolean;timeStep:number}>;
-    edges:Array<{source:string;target:string}>;
-    totalNeighbors:number; visibleNeighbors:number};
+    edges:Array<{source:string;target:string}>;totalNeighbors:number;visibleNeighbors:number};
+};
+export type TemporalFold = {spec:string;strategy:string;time_step:number;last_training_step:number;label_lag_assumed:number;ap:number;prevalence:number;known_illicit:number};
+export type TemporalPosthoc = {spec:string;strategy:string;time_step:number;ap:number;prevalence:number;known_illicit:number};
+export type RobustFold = {candidate:string;strategy:string;capacity_preset:string;label_lag:number;time_step:number;forward_ap:number;train_ap_in_sample:number;excess_ap_gap:number;known_illicit:number};
+export type RobustRank = {label_lag:number;candidate:string;strategy:string;capacity_preset:string;mean_forward_ap:number;worst_forward_ap:number;mean_excess_ap_gap:number};
+export type BudgetRow = {label_lag:number;candidate:string;strategy:string;capacity_preset:string;time_step:number;capacity_fraction:number;reviewed:number;known_illicit:number;known_licit:number;unknown:number;known_illicit_capture:number};
+export type DriftRow = {time_step:number;feature:string;psi:number|null;wasserstein:number|null;reference_median:number|null;current_median:number|null;reference_missing_rate:number;current_missing_rate:number};
+export type StoryChapter = {id:number;act:number;name:string;subtitle:string;interaction:string};
+export type ResearchData = {
+  repository:string;originalRun:string;
+  dataset:{nodes:number;raw_edges:number;class_counts:Record<string,number>;same_step_edges:number;source_commit:string;files:Record<string,{sha256:string;bytes:number}>};
+  graph:{nodes:number;edges:number;weak_components:number;largest_component:number;strong_components:number;degree_quantiles:Record<string,number>};
+  graphSummary:AnyRow[];splitCounts:Array<{split:string;class:number;count:number}>;
+  classByTime:ClassRow[];originalResults:ResultRow[];
+  originalRobustness:Array<{cohort:string;experiment_id:string;n:number;illicit:number;ap:number}>;
+  timeAP:TimeRow[];primaryTimeline:TimeRow[];
+  originalReviewCapacity:CapacityRow[];decisionPolicy:Record<string,unknown>;
+  duplicateAudit:Record<string,number>;permutationImportance:Array<{feature:string;mean_ap_drop:number;std_ap_drop:number}>;
+  missingness:Array<{split:string;class:number;transactions:number;missing_named:number}>;
+  pairedComparisons:Record<string,{delta_ap:number;ci_95_low:number;ci_95_high:number}>;
+  structuralAblations:ResultRow[];negativeControl:Record<string,unknown>;
+  verification:{saved_ap_matches_predictions:boolean;source_hashes_match_executed_run:boolean;notebooks:Array<{notebook:string;executed_code_cells:number}>};
+  runManifest:{run_id:string;experiments:number;tree_shap_additivity_passed:boolean;sql_graph_degree_parity_passed:boolean;main_ledger_records?:number;seconds:number};
+  originalCases:CaseRow[];investigator:TransactionCase[];
+  temporal:{
+    validationFolds:TemporalFold[];leaderboard:Array<{spec:string;strategy:string;mean_validation_ap:number;worst_validation_ap:number;folds:number}>;
+    posthocReplay:TemporalPosthoc[];drift:DriftRow[];
+    labelScore:Array<{time_step:number;known_illicit:number;known_illicit_prevalence:number;known_label_coverage:number;average_precision_labeled:number;score_median_all:number;score_p95_all:number}>;
+    graphAblation:Array<{time_step:number;feature_group:string;period:string;ap:number;prevalence:number}>;
+    manifest:Record<string,unknown>;
+  };
+  robustness:{
+    validationFolds:RobustFold[];leaderboard:RobustRank[];selected:RobustRank[];capacity:BudgetRow[];manifest:Record<string,unknown>;
+  };
+  metrics:Record<string,Metric>;chapters:StoryChapter[];
+  notebooks:Array<{name:string;status:string}>;evidenceIndex:Record<string,string>;
+  policy:Record<string,string>;
 };
 """
     module = preamble + "\nexport const data = " + json.dumps(evidence, ensure_ascii=False,
-        separators=(",", ":"), allow_nan=False) + " as const;\n"
+        separators=(",", ":"), allow_nan=False) + " as unknown as ResearchData;\n"
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(module, encoding="utf-8")
     print(f"Wrote {args.output}, {len(module)} bytes. No invented metrics.")
