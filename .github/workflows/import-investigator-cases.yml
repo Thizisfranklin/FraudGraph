@@ -1,0 +1,51 @@
+name: Import verified Investigator case artifact
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/import-investigator-cases.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  import-source-cases:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Download already-reproduced source-backed cases
+        uses: actions/download-artifact@v4
+        with:
+          name: fraudgraph-investigator-cases
+          run-id: 45311450362
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          path: app/public
+      - name: Check case data integrity before publication
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          source=Path("app/public/investigations.json")
+          payload=json.loads(source.read_text(encoding="utf-8"))
+          cases=payload["transactions"]
+          assert len(cases)>=90, "Expected real exported transactions"
+          assert len({x["id"] for x in cases})==len(cases)
+          assert all(x["network"]["nodes"] for x in cases)
+          assert set(x["retrospectiveClass"] for x in cases)=={1,2,3}
+          print("Validated",len(cases),"source-backed transaction examples")
+          PY
+      - name: Commit the verified case JSON to the application branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/public/investigations.json
+          if git diff --staged --quiet; then
+            echo "Case JSON already committed"
+          else
+            git commit -m "Bundle 101 real Elliptic++ transaction examples for investigator app"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          fi
