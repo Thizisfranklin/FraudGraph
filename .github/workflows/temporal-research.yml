@@ -27,8 +27,9 @@ jobs:
       - name: Reproduce original data and model outputs
         run: python -m fraudgraph.pipeline --download
       - name: Run drift diagnostics and validation-only model search
+        if: ${{ ! inputs.include_posthoc_test }}
         run: python scripts/run_temporal_research.py
-      - name: Optional post-hoc replay (already-inspected period)
+      - name: Run drift study with post-hoc test replay (already-inspected period)
         if: inputs.include_posthoc_test
         run: python scripts/run_temporal_research.py --include-posthoc-test
       - name: Upload exploratory reports (no raw data or model weights)
