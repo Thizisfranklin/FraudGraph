@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: \${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.head_ref || github.ref_name }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -40,8 +40,8 @@ jobs:
         with:
           name: fraudgraph-temporal-study
           run-id: 45307007554
-          github-token: \${{ github.token }}
-          repository: \${{ github.repository }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
           path: .research/temporal
       - name: Recover saved robustness experiment artifact
         id: robustness
@@ -50,8 +50,8 @@ jobs:
         with:
           name: fraudgraph-robustness-and-analyst-report
           run-id: 45308612475
-          github-token: \${{ github.token }}
-          repository: \${{ github.repository }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
           path: .research/robustness
       - name: Generate exact, typed, centralized data (never fabricate)
         shell: bash
@@ -73,7 +73,7 @@ jobs:
           git add story/src/data/data.ts
           if ! git diff --cached --quiet; then
             git commit -m "Pin exact original and follow-up FraudGraph evidence in story data.ts"
-            git push origin "HEAD:\${{ github.head_ref }}"
+            git push origin "HEAD:${{ github.head_ref }}"
           fi
       - name: Install story dependencies
         working-directory: story
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: \${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -115,10 +115,10 @@ jobs:
       - name: Check repository owner's Pages setting
         id: pagecheck
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          if gh api "repos/\${GITHUB_REPOSITORY}/pages" > /tmp/pages.json 2>/dev/null; then
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" > /tmp/pages.json 2>/dev/null; then
             BUILD=$(python -c "import json; print(json.load(open('/tmp/pages.json')).get('build_type',''))")
             if [ "$BUILD" = "workflow" ]; then
               echo "enabled=true" >> "$GITHUB_OUTPUT"
