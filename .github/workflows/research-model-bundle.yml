@@ -1,6 +1,7 @@
 name: Package validation-selected research model
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - 'scripts/build_selected_research_model.py'
       - 'scripts/score_research_batch.py'
