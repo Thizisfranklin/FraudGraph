@@ -46,3 +46,25 @@
 .priority-tier small{color:var(--muted);font-size:10px;line-height:1.5;font-weight:700;max-width:280px}
 @media(max-width:640px){.entrance-copy{margin:0 10px;padding:50px 13px 65px;border-radius:17px}.corner-minimap svg{height:46px;width:56px}}
 @media(hover:none),(prefers-reduced-motion:reduce){.cursor-label,.theme-transition-wipe{display:none!important}}
+
+/* First-90-seconds editorial pass: immediately show the scientific question,
+   an exact sourced comparison, and the limitation. No timed or auto-moving UI. */
+.entrance-scene{min-height:100svh}
+.entrance-copy{width:min(100% - 28px,1080px);margin:88px auto 55px!important;padding:26px clamp(16px,3vw,42px) 30px!important}
+.entrance-copy h1{font-size:clamp(52px,9vw,112px);margin:12px 0 15px}
+.hero-subtitle{font-size:clamp(19px,2.4vw,28px);max-width:750px;margin:0 auto 9px;line-height:1.35}
+.hero-explainer{font-size:clamp(13px,1.3vw,16px);line-height:1.55;color:#fff7f3;max-width:720px;margin:0 auto}
+.hero-briefing{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;text-align:left;margin:23px auto 0;max-width:980px}
+.hero-briefing>div{background:#130e2cde;border:1px solid #ffe7f16b;border-radius:12px;padding:15px;display:flex;flex-direction:column;gap:7px}
+.hero-briefing span{font-size:10px;letter-spacing:1.2px;color:#9ffff0;font-weight:900}
+.hero-briefing strong{font-size:clamp(14px,1.4vw,19px);line-height:1.2;color:#fff}
+.hero-briefing small{font-size:11px;line-height:1.45;color:#f5e1f4}
+.hero-briefing a{color:#97fff0;text-decoration:underline;text-underline-offset:3px}
+.hero-buttons{margin-top:19px;flex-direction:row;justify-content:center;flex-wrap:wrap;gap:12px}
+.hero-action{padding:12px 18px}
+.hero-secondary-action{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border:1px solid #f9dfff;color:#fff;background:#160e37e8;border-radius:8px;font-size:11px;font-weight:900;letter-spacing:.65px}
+.hero-secondary-action:hover{background:#36234f}
+.hero-boundary{font-size:11px!important;line-height:1.5;color:#fff5f7;margin:18px auto 0;max-width:720px}
+.nav-group-label{color:var(--teal);font-size:9px;letter-spacing:1.25px;font-weight:800;padding:13px 8px 4px;margin-top:5px;border-top:1px solid var(--line)}
+@media(max-width:760px){.entrance-copy{margin:77px auto 45px!important;padding:22px 15px 28px!important}.entrance-copy h1{font-size:clamp(48px,11vw,78px)}.hero-briefing{grid-template-columns:1fr;gap:7px;margin-top:15px}.hero-briefing>div{padding:10px 12px;gap:3px}.hero-briefing strong{font-size:14px}.hero-briefing small{font-size:10px}.hero-buttons{flex-direction:column;align-items:stretch}.hero-buttons button{width:100%}.entrance-bottom{display:none}.grain-sun{opacity:.5}}
+@media(max-height:650px) and (min-width:761px){.entrance-copy{margin-top:78px!important;margin-bottom:28px!important}.hero-briefing{margin-top:12px}.hero-briefing>div{padding:10px}.hero-boundary{margin-top:8px}}
