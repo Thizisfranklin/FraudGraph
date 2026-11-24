@@ -12,3 +12,6 @@ models/*
 reports/predictions.parquet
 reports/analytics.sqlite
 reports/runs/
+
+# Generated exploratory drift and adaptation results
+reports/exploratory/
