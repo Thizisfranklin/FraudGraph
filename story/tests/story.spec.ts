@@ -8,7 +8,10 @@ test("all real chapters render, evidence is accessible, and the breakdown is int
  await expect(page.locator(".chapter-6 .section-heading h2")).toContainText("model fumbled");
  const number=await page.locator(".chapter-6 .huge-score").innerText();
  expect(number).toMatch(/^0\./);
- await page.locator("#time-scrub").fill("43");
+ await page.locator("#time-scrub").focus();
+ await page.keyboard.press("ArrowRight");
+ await page.keyboard.press("ArrowRight");
+ await page.keyboard.press("ArrowRight");
  await expect(page.locator(".chapter-6 .huge-score")).toHaveText("0.0265");
  expect(errors).toEqual([]);
 });
