@@ -1,133 +1,73 @@
 # FraudGraph
 
-**Can a transaction look ordinary on its own but suspicious when you see where its money flows?**
+**Can a Bitcoin transaction look ordinary on its own—but different once you follow its connections?**
 
-I explored that question using the **[Elliptic++ Bitcoin transaction dataset](https://github.com/git-disl/EllipticPlusPlus)**. FraudGraph compares machine-learning models that look only at individual transaction attributes with models that also look at transaction-to-transaction relationships.
+FraudGraph is an **independent, end-to-end machine learning research project** exploring whether transaction-network features improve fraud-risk *ranking*, and whether those improvements survive changes over time. It uses the [Elliptic++ Bitcoin transaction dataset](https://github.com/git-disl/EllipticPlusPlus), not live wallets or payment traffic.
 
-The goal isn't to declare someone guilty or automatically block transactions. It's to investigate whether **network context can help human analysts decide what to review first**—and whether that improvement holds up over time.
+## Why I built it
 
-<p align="center"><img src="reports/figures/case_graph_uplift.png" width="790" alt="A one-hop Bitcoin transaction network illustrating how relationships change one model's risk score"></p>
+I've long been curious about how Bitcoin works, even though I haven't worked with it directly. When I started looking for a fraud-detection project, I wanted to move beyond the familiar tabular credit-card fraud datasets and challenge myself with something less straightforward: **money flows, connected transactions, incomplete labels, and models that might fail over time**.
 
-*One selected example: a known-illicit test transaction scored **0.299** using its own attributes and **0.689** after adding graph features. It's a useful illustration, not proof that every transaction improves.*
+The research, analysis, and applications here are my **independent work**.
 
-## Explore FraudGraph as a story: Neon Ledger City
+## Explore the two apps
 
-**[Open the Neon Ledger City source](story/README.md)** · **[Download the standalone interactive HTML](https://github.com/Thizisfranklin/FraudGraph/actions/workflows/neon-ledger-city.yml)** · **[Research-to-chapter evidence audit](docs/STORY_EVIDENCE_COVERAGE.md)**
+Both apps tell the **same evidence-backed FraudGraph story** in different ways. Choose whichever suits you:
 
-A complete, source-backed interactive experience built with **React + TypeScript + Tailwind + Framer Motion**. Descend through the Bitcoin transaction evidence, investigate a real directed graph, switch between transaction and graph models, operate a limited analyst review queue, and confront the temporal collapse. The second act examines drift, actual forward-retraining results, regularization/underfitting controls, hypothetical label delays, and analyst budgets. Read and Play modes use the **same recorded evidence**; unsupported scenarios show `-- awaiting data --`.
+### 1. [FraudGraph Investigator — Open the app](https://thizisfranklin.github.io/FraudGraph/investigator/)
 
-The creative world uses original sunset/palm/chrome SVG/CSS graphics, five accessible color themes, keyboard navigation and reduced-motion handling. It does **not** imply live Bitcoin scoring, calibrated probabilities, criminal guilt, or prospectively proven reliability.
+**Prefer a straightforward analyst workspace? Start here.**
 
-**Availability:** GitHub Actions produces an offline, single-file HTML in the `fraudgraph-neon-ledger-city-app` artifact. The planned Pages URL `https://thizisfranklin.github.io/FraudGraph/` requires the repository owner to enable **Settings → Pages → Source: GitHub Actions** once; enabling it is not within ordinary Actions permissions. The existing Investigator is preserved in the same download under `investigator/`.
+Explore **101 real Elliptic++ case examples**, inspect directed transaction neighborhoods, compare saved transaction-only and graph-enhanced model scores, and take/export case notes. It's a retrospective investigation demo—not a live Bitcoin wallet checker or a fraud-verdict system.
 
-## Open FraudGraph Investigator
+[**Launch Investigator →**](https://thizisfranklin.github.io/FraudGraph/investigator/) · [App source](app/) 
 
-**[React application source and setup](app/README.md)** · **[Get the built app from GitHub Actions](https://github.com/Thizisfranklin/FraudGraph/actions/workflows/investigator-web.yml)**
+### 2. [Neon Ledger City — Open the interactive story](https://thizisfranklin.github.io/FraudGraph/)
 
-FraudGraph Investigator is a transaction-review workspace, not just a chart gallery. Its **101 real Elliptic++ case examples** include bounded directed Bitcoin transaction neighborhoods, saved model-score comparisons, selected explanations, and human case notes/JSON exports. This research prototype **does not accept arbitrary live Bitcoin wallet addresses or make fraud verdicts**.
+**In the mood for a more cinematic, game-inspired experience? Start here.**
 
-**Hosting:** the React production build is complete. The public address `https://thizisfranklin.github.io/FraudGraph/` will work **only after the repository owner enables GitHub Pages once** via [Settings → Pages](https://github.com/Thizisfranklin/FraudGraph/settings/pages), selects **Source: GitHub Actions**, and reruns the [Investigator deployment workflow](https://github.com/Thizisfranklin/FraudGraph/actions/workflows/investigator-web.yml). GitHub's default Actions token cannot enable Pages on its own.
+This is the same research told through a neon-city, interactive story with real graphs, model comparisons, analyst-review tradeoffs, and the surprising decline in later-period performance. I drew visual inspiration from the *Grand Theft Auto* series' atmosphere and retro-city styling, while creating **original artwork and UI**—no Rockstar branding, music, game assets, or characters.
 
-## What am I actually analyzing?
+[**Enter Neon Ledger City →**](https://thizisfranklin.github.io/FraudGraph/) · [Story source](story/)
 
-Bitcoin transactions are public on the blockchain, but an address doesn't automatically identify its real-world owner. Elliptic++ provides a transaction network, attributes and known illicit/licit labels for only some transactions.
+> **Same underlying study, different experiences:** Investigator is the practical workbench; Neon Ledger City is the visual walkthrough. Neither invents transaction outcomes, and neither makes accusations about people.
 
-Think of two ways to study the same event:
+## The research, at a glance
 
-- **A transaction as a row:** its amount, fees, size and other available characteristics.
-- **A transaction in a network:** which other transactions it connects to, how connected its neighborhood is and where it sits in the flow.
+The dataset has **203,769 Bitcoin transactions**, **234,355 directed links**, and **49 time steps**. Many transactions are **unlabeled**; I never treated “unknown” as legitimate.
 
-The dataset contains **203,769 transactions**, connected by **234,355 directed relationships** over **49 time steps**. Most transactions don't have a known label, and I kept them **unknown** instead of treating them as legitimate.
+I engineered time-aware network features, compared transaction-only models with transaction + graph models, and used **chronological splits** (training: steps 1–29; validation: 30–39; testing: 40–49) rather than randomly mixing future and past data.
 
-<p align="center"><img src="reports/figures/class_and_time.png" width="850" alt="Known licit, known illicit and unknown transaction counts over chronological time steps"></p>
+<p align="center"><img src="reports/figures/case_graph_uplift.png" alt="Real transaction-neighborhood example and model-score comparison" width="760"></p>
 
-*Known labels are limited, and the later time periods are reserved for testing rather than randomly mixed into training.*
+*One recorded example changed from a transaction-only score of **0.299** to a graph-enhanced score of **0.689**. These are model scores, **not calibrated probabilities or guilt estimates**.*
 
-## What I built
+### What I found
 
-Using **Python, SQL, NetworkX and scikit-learn/XGBoost**, I:
-
-1. Validated the source files, built time-aware graph features and compared **transaction-only** models against **transaction + graph** models.
-2. Trained on earlier time steps (1–29), selected models using validation steps (30–39), and evaluated on later steps (40–49).
-3. Tested a practical constraint: if analysts can investigate only a small share of traffic, which known illicit transactions make it into their review queue?
-
-Features from future time buckets are excluded from earlier graph snapshots. This is a **batch, end-of-time-bucket experiment**, not a real-time fraud product.
-
-## The results
-
-<p align="center"><img src="reports/figures/model_comparison.png" width="930" alt="Precision-recall and analyst review-capacity plots comparing transaction and graph models"></p>
-
-| What I tested | What happened |
+| Finding | Recorded result |
 | --- | --- |
-| Add graph features to XGBoost using **15 named transaction attributes** | Average Precision improved from **0.4239 to 0.5240** |
-| Add graph features when the model already has **93 additional local attributes** | Average Precision barely moved: **0.6349 to 0.6398** |
-| Review the **highest-ranked 5% of all test traffic** with the selected model | Captured **273 of 636 known illicit transactions (42.9%)** |
-| Check the primary graph model in **early versus later test periods** | Average Precision fell from **0.7070 to 0.0257** |
+| XGBoost, 15 named transaction attributes | Test Average Precision (AP): **0.4239 → 0.5240** with graph features |
+| XGBoost, 93 additional local attributes | Test AP: **0.6349 → 0.6398** — much smaller improvement |
+| Top **5%** of all test transactions sent for review | **273 / 636** known-illicit test transactions selected (**42.9%**) |
+| Primary graph model, earlier vs later test periods | AP dropped from **0.7070 → 0.0257** |
 
-*Average Precision summarizes how well known illicit transactions rank above known licit ones across decision thresholds. It isn't classification accuracy or a percentage of money recovered.*
+<p align="center"><img src="reports/figures/model_comparison.png" alt="Held-out model comparisons and review-capacity evidence" width="860"></p>
 
-The 5% review simulation counts **unknown-label transactions against analyst capacity**, too. The 42.9% figure is recall **among known illicit test transactions**; the true recall for all illicit traffic cannot be established when so many labels are unknown.
+<p align="center"><img src="reports/figures/temporal_generalization.png" alt="Measured deterioration across later chronological test periods" width="860"></p>
 
-### The finding that changed the story
+**The lesson:** Graph features *sometimes* help ranking, but the benefit depends on the baseline. More importantly, a good pooled score can hide a severe failure in later periods. Subsequent drift and retraining experiments explored that weakness; they **do not establish prospective production reliability**. [Methods and limitations](docs/UNDERSTAND_AND_CHECK.md) · [Further temporal findings](docs/BASELINE_TEMPORAL_FINDINGS.md)
 
-<p align="center"><img src="reports/figures/temporal_generalization.png" width="930" alt="Substantial degradation in model Average Precision across later chronological test buckets"></p>
+*AP measures ranking against transactions with known dataset labels; it is not accuracy, recovered funds, or actual fraud prevented. “Illicit” is a dataset label, not a claim of individual criminal guilt. Unknown outcomes still consume review capacity.*
 
-Graph information **can** improve a model—but the size of the improvement depends on what transaction information you already have. More importantly, strong pooled results can hide a serious decline in later periods.
+## Explore the code
 
-The selected graph model's early-versus-late performance makes it inappropriate to claim deployment readiness from this experiment. Shifts in the observed transaction population and changes in the share of known illicit labels also complicate the comparison; the chart doesn't establish the cause of the decline.
+- [Notebooks](notebooks/) · [Figures and saved results](reports/) · [Feature definitions](reports/FEATURE_DICTIONARY.md)
+- [Leakage audit](reports/LEAKAGE_AUDIT.md) · [Research reproducibility and checks](docs/UNDERSTAND_AND_CHECK.md) · [Follow-up robustness study](docs/ROBUSTNESS_AND_ANALYST_EVALUATION.md)
 
-**My takeaway:** a model that looks impressive on one test summary isn't necessarily reliable enough to guide real investigations tomorrow.
+**Stack:** Python, pandas, NetworkX, SQL/SQLite, scikit-learn, XGBoost, matplotlib, Plotly, pytest; React, TypeScript, Vite, React Flow and Framer Motion for the apps.
 
-## Explore the work
+For local analysis (Python 3.12), see the [reproducibility instructions](docs/UNDERSTAND_AND_CHECK.md). The original large dataset is not redistributed.
 
-This repository includes a complete reproducible data science investigation and a React-based human-review prototype. It also contains executed notebooks and saved reports, including:
+---
 
-- [Notebooks](notebooks) — the analysis from data exploration to graph features and model evaluation.
-- [Model comparisons and visualizations](reports/figures) — including examples of the actual transaction network.
-- [Understand and verify FraudGraph](docs/UNDERSTAND_AND_CHECK.md) — a plain-English walkthrough of the methods, checks and limitations.
-
-### Beyond a single AP score: what the follow-up research found
-
-**Model degradation:** The primary graph-based XGBoost model dropped sharply in ranking quality around **time step 43**. Transaction-only models also deteriorated, so the failure cannot be blamed solely on graph features. The share of known illicit labels changed at the same time; this is evidence of instability, not a verified cause of concept drift. [Read the actual temporal findings](docs/BASELINE_TEMPORAL_FINDINGS.md).
-
-**Adaptive model comparison:** We tested frozen, expanding-history, rolling-window and recency-weighted approaches under hypothetical label delays. A prespecified follow-up comparison tested shallow, regularized, and higher-capacity XGBoost models on forward validation periods **35, 37 and 39**, selecting by worst-period AP rather than a pooled score.
-
-| Assumed label delay | Validation-selected configuration | Mean AP | Worst-period AP |
-| --- | --- | ---: | ---: |
-| 2 buckets | **Expanding history**, XGBoost depth 3, 150 trees | **0.8140** | **0.7503** |
-| 4 buckets | Frozen higher-capacity XGBoost | 0.8158 | 0.7231 |
-| 6 buckets | Frozen higher-capacity XGBoost | 0.8158 | 0.7231 |
-
-The two-bucket expanding-history candidate is the **documented research preference under that specific availability assumption**, because it achieved the better worst-fold result in that scenario. True label-maturation dates are not present, so changing the delay is **not** a way to tune a production model. Training AP versus forward AP also helps diagnose possible overfitting or underfitting, but drift and selective labels can create gaps too.
-
-**Analyst workload:** With the validation-selected two-step model and capacity limited to **5% of all transactions** in those three validation periods, 580 cases were selected: **184 known illicit**, **2 known licit**, and **394 unknown**. This is useful prioritization evidence, not confirmed recall among all illicit activity.
-
-**Critical limitation:** The later steps 40–49 had already been examined before the adaptation hypotheses were chosen. The additional retrospective results are **post-hoc**, not an untouched prospective test. The app displays **reproduced historical frozen-model scores** for source-backed transactions, not predictions secretly generated by the adaptation candidate. A reproduced run can differ slightly from the original committed case-score snapshot. No system is presented as a verified live Bitcoin fraud detector.
-
-[Experimental protocol and checks](docs/ROBUSTNESS_AND_ANALYST_EVALUATION.md) · [Temporal drift notebook](notebooks/08_temporal_drift.ipynb) · [Analyst application architecture](docs/ANALYST_WORKBENCH_ROADMAP.md)
-
-### Reproduce the analysis
-
-Use **Python 3.12**. The original transaction source files are substantial (about 702 MB), so allow disk space and download time.
-
-```bash
-git clone https://github.com/Thizisfranklin/FraudGraph.git
-cd FraudGraph
-python -m pip install -r requirements.txt
-python -m pip install --no-deps -e .
-python -m pytest -q
-python -m fraudgraph.pipeline --download
-python -m fraudgraph.diagnostics
-python scripts/build_notebooks.py
-python scripts/execute_notebooks.py
-python scripts/build_reports.py
-python scripts/verify_artifacts.py
-```
-
-The original data aren't redistributed here. For exact assumptions and run evidence, see [the leakage audit](reports/LEAKAGE_AUDIT.md), [decision policy](reports/DECISION_FRAMEWORK.md) and [execution notes](reports/EXECUTION_NOTES.md).
-
-**Limitations:** labels are incomplete; risk scores are not calibrated probabilities; model performance changes sharply over time; no customer harm, money recovered or production effectiveness is measured. The network snapshots reflect what's observable at each time-bucket close, not real-time scoring.
-
-**Tools:** Python, pandas, NetworkX, XGBoost, scikit-learn, SQLite, matplotlib, Plotly and pytest.
-
-*Data: Elmougy & Liu (2023), [Elliptic++ authors' repository](https://github.com/git-disl/EllipticPlusPlus). “Illicit” is the dataset's transaction label; it isn't a claim of individual legal guilt.*
+*Dataset credit: [Elliptic++](https://github.com/git-disl/EllipticPlusPlus) (Elmougy & Liu, 2023). Research prototype only; no live scoring or automatic blocking.*
