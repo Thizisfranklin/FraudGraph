@@ -67,7 +67,7 @@ export function ItDepends(){
 }
 export function AnalystQueue(){
  const points=data.originalReviewCapacity.filter(x=>x.experiment_id==="named_xgboost_graph"&&x.scope==="all_transactions"&&x.split==="test").sort((a,b)=>a.capacity_fraction-b.capacity_fraction);
- const capacities=[...new Set(points.map(x=>x.capacity_fraction))],[fraction,setFraction]=useState(capacities.find(x=>x===.05)||capacities[0]),row=points.find(x=>Math.abs(x.capacity_fraction-fraction)<1e-9);
+ const capacities=[...new Set(points.map(x=>x.capacity_fraction))],[fraction,setFraction]=useState(capacities[Math.floor(capacities.length/2)]||capacities[0]),row=points.find(x=>Math.abs(x.capacity_fraction-fraction)<1e-9);
  const total=data.splitCounts.find(x=>x.split==="test"&&x.class===1)?.count;
  return <><SectionTitle eyebrow="CHAPTER 05 / THE REVIEW QUEUE" title="Your analysts have a limit.">Review capacity applies to all traffic. Unknown outcomes take up real space in the queue.</SectionTitle><DepthCard>
  <SelectChips label="Select a recorded test review budget" values={capacities} value={fraction} onChange={setFraction} format={pct}/>
@@ -79,7 +79,7 @@ export function AnalystQueue(){
 export function PlotTwist({play}:{play:boolean}){
  const series=[...data.primaryTimeline].sort((a,b)=>a.time_step-b.time_step),[step,setStep]=useState(series[0]?.time_step||0),current=series.find(x=>x.time_step===step)||series[0];
  const early=data.originalRobustness.find(r=>r.cohort==="early_test_steps_40_43"&&r.experiment_id==="named_xgboost_graph"),late=data.originalRobustness.find(r=>r.cohort==="late_test_steps_44_49"&&r.experiment_id==="named_xgboost_graph");
- const broken=step>=43;
+ const collapseStep=series.reduce((best,r,i)=>i>0&&(series[i-1].ap-r.ap)>best.drop?{step:r.time_step,drop:series[i-1].ap-r.ap}:best,{step:series[0]?.time_step||0,drop:-Infinity}).step;const broken=step>=collapseStep;
  return <div className={"collapse-scene "+(broken?"crisis":"")}><SectionTitle eyebrow="CHAPTER 06 / THE PLOT TWIST" title="And then the model fumbled.">The pooled result couldn't hide what happened next. Scrub through the actual test buckets.</SectionTitle>
  <DepthCard className="collapse-content"><div className="collapse-main"><span className="eyebrow">NAMED XGBOOST + GRAPH / ORIGINAL TEST</span><motion.div key={step} className="huge-score" initial={{x:broken?-15:0,opacity:.15,filter:"blur(7px)"}} animate={{x:0,opacity:1,filter:"blur(0px)"}}>{current?m(current.ap,4):EMPTY}</motion.div><span className="score-caption">AVERAGE PRECISION / STEP {step}</span>{broken&&<p className="glitch-headline">{play?"MISSION OUTCOME: RANKING FAILURE":"A documented loss of ranking quality."}</p>}</div>
  <div className="scrubber"><label htmlFor="time-scrub">TIME-STEP SCRUBBER</label><input id="time-scrub" type="range" min={series[0]?.time_step||0} max={series.at(-1)?.time_step||0} step="1" value={step} onChange={e=>setStep(Number(e.target.value))}/>
