@@ -16,16 +16,6 @@ const STATIONS:{id:Theme;name:string;frequency:string}[]=[
  {id:"chrome",name:"Y2K Chrome",frequency:"FUTURE"},
  {id:"glitch",name:"Soft Glitch",frequency:"LATE NITE"},
 ];
-const TIPS=[
- "Unknown labels are not negative examples.",
- "An Average Precision score is not classification accuracy.",
- "Transactions are nodes. Observed relationships are directed edges.",
- "All reported graph snapshots are taken at time-bucket close.",
- "A high risk score is not a probability of criminal guilt.",
- "The temporal failure is a measured finding—not a missing slide.",
- "Later adaptive replays use previously inspected periods.",
- "No new fraud outcomes are simulated in play mode.",
-];
 const KONAMI=["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
 function goto(id:number,quick=false){document.getElementById("chapter-"+id)?.scrollIntoView({behavior:quick||window.matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"start"});}
 function PlayTone({active}:{active:boolean}){return null}
@@ -36,11 +26,6 @@ function Vortex({reduce}:{reduce:boolean}){
  return <motion.svg aria-hidden className="vortex-background" viewBox="0 0 1000 1000" style={reduce?{}:{rotate:rotation,scale}}>
   {Array.from({length:8},(_,i)=><ellipse key={i} cx="500" cy="500" rx={100+i*65} ry={63+i*65} fill="none" stroke="currentColor" strokeWidth={i===0?2:1} strokeDasharray={i%2?"12 12":"7 25"} opacity={.2-i*.017} transform={"rotate("+(i*17)+" 500 500)"}/>)}
  </motion.svg>;
-}
-function TipCard({active}:{active:boolean}){
- const [tip,setTip]=useState(0);
- useEffect(()=>{if(!active)return;const timer=window.setInterval(()=>setTip(v=>(v+1)%TIPS.length),6000);return()=>clearInterval(timer);},[active]);
- return <div className="tip-card" role="status" aria-live="polite"><span>LEDGER TIP</span><p>{TIPS[tip]}</p></div>;
 }
 function Phone({close}:{close:()=>void}){
  const first=useRef<HTMLButtonElement>(null);
@@ -90,7 +75,6 @@ export default function App(){
  const [chaos,setChaos]=useState(false);
  const [sound,setSound]=useState(false);
  const [logoClicks,setLogoClicks]=useState(0);
- const [tipOpen,setTipOpen]=useState(true);
  const reduce=Boolean(useReducedMotion());
  const {scrollYProgress}=useScroll();
  const progress=useSpring(scrollYProgress,{stiffness:110,damping:27});
@@ -118,10 +102,6 @@ export default function App(){
    if(event.pointerType!=="mouse")return;
    document.documentElement.style.setProperty("--cursor-x",event.clientX+"px");
    document.documentElement.style.setProperty("--cursor-y",event.clientY+"px");
-   const label=document.getElementById("cursor-label");
-   const target=event.target instanceof Element?event.target:null;
-   const hint=target?.closest("button,a,input,select")?"POKE IT":"FALL IN";
-   if(label&&label.textContent!==hint)label.textContent=hint;
   };
   window.addEventListener("pointermove",handler,{passive:true});
   return()=>window.removeEventListener("pointermove",handler);
@@ -141,12 +121,12 @@ export default function App(){
  const navigate=(id:number)=>{goto(id,Math.abs(id-active)>1);setNavOpen(false);tone();};
  const clickLogo=()=>{setLogoClicks(v=>{if(v+1>=5){setChaos(x=>!x);return 0;}return v+1;});};
  const chapters=[
-  <Entrance onEnter={()=>navigate(1)} play={play}/>,<OneTransaction/>,<TheNetwork/>,<TheUplift/>,
+  <Entrance onEnter={()=>navigate(1)} onResults={()=>navigate(4)} play={play}/>,<OneTransaction/>,<TheNetwork/>,<TheUplift/>,
   <ItDepends/>,<AnalystQueue/>,<PlotTwist play={play}/>,<WhyBreak/>,<RetrainingLoop play={play}/>,
   <StressTests play={play}/>,<AnalystBudgets play={play}/>,<Workbench/>,<Takeaway/>
  ];
  return <div className={"neon-ledger "+(play?"mode-play":"mode-read")+(chaos?" chaos-mode":"")} data-theme={theme}>
-   <Vortex reduce={reduce}/><div className="scanline-layer" aria-hidden/><div className="cursor-glow" aria-hidden/><div id="cursor-label" className="cursor-label" aria-hidden>FALL IN</div>{!reduce&&<motion.div key={theme} className="theme-transition-wipe" initial={{clipPath:"circle(0% at 90% 4%)",opacity:.13}} animate={{clipPath:"circle(170% at 90% 4%)",opacity:0}} transition={{duration:.7,ease:"easeOut"}} aria-hidden/>}
+   <Vortex reduce={reduce}/><div className="scanline-layer" aria-hidden/><div className="cursor-glow" aria-hidden/>{!reduce&&<motion.div key={theme} className="theme-transition-wipe" initial={{clipPath:"circle(0% at 90% 4%)",opacity:.13}} animate={{clipPath:"circle(170% at 90% 4%)",opacity:0}} transition={{duration:.7,ease:"easeOut"}} aria-hidden/>}
    <motion.div className="top-progress" style={{scaleX:progress}}/>
    <header className="hud"><button className="brand-button" onClick={clickLogo} aria-label="FraudGraph logo. Click repeatedly for hidden theme." title="FraudGraph">
       <span className="brand-icon">◈</span><span>FRAUD<span>GRAPH</span></span></button>
@@ -160,14 +140,12 @@ export default function App(){
    </header>
    <aside className={"chapter-nav "+(navOpen?"open":"")} aria-label="Chapter navigation">
       <div className="nav-heading"><span>THE DESCENT</span><button onClick={()=>setNavOpen(false)} className="nav-close" aria-label="Close chapters"><X size={17}/></button></div>
-      <div className="nav-scroll">{data.chapters.map(ch=><button key={ch.id} onClick={()=>navigate(ch.id)} className={"nav-chapter "+(active===ch.id?"active":"")} aria-current={active===ch.id?"step":undefined}><span className="nav-bullet"/><span>{String(ch.id).padStart(2,"0")}</span><strong>{ch.name}</strong></button>)}</div>
+      <div className="nav-scroll">{data.chapters.map(ch=><React.Fragment key={ch.id}>{[0,1,4,6,7,11].includes(ch.id)&&<div className="nav-group-label">{({0:"START HERE",1:"THE TRANSACTION",4:"THE EVIDENCE",6:"THE FAILURE",7:"FOLLOW-UP RESEARCH",11:"THE TAKEAWAY"} as Record<number,string>)[ch.id]}</div>}<button key={ch.id} onClick={()=>navigate(ch.id)} className={"nav-chapter "+(active===ch.id?"active":"")} aria-current={active===ch.id?"step":undefined}><span className="nav-bullet"/><span>{String(ch.id).padStart(2,"0")}</span><strong>{ch.name}</strong></button></React.Fragment>)}</div>
       <div className="nav-settings"><button aria-pressed={play} onClick={()=>setPlay(v=>!v)}><Gamepad2 size={16}/> {play?"Play mode":"Read mode"} <span>SWITCH</span></button><button onClick={()=>navigate(Math.min(active+1,data.chapters.length-1))}>Skip ahead <ArrowRight size={14}/></button></div>
    </aside>
-   <div className="corner-minimap" role="img" aria-label={"Actual observed three-node example network. Current chapter "+String(active)+": "+data.chapters[active]?.name}><svg viewBox="0 0 100 100" aria-hidden><line x1="22" y1="50" x2="49" y2="50" stroke="var(--teal)" strokeWidth="2"/><line x1="49" y1="50" x2="78" y2="28" stroke="var(--teal)" strokeWidth="2"/><line x1="49" y1="50" x2="78" y2="77" stroke="var(--pink)" strokeWidth="2"/>{[["22","50"],["78","28"],["78","77"]].slice(0,Math.min(3,data.investigator.find(x=>x.caseType==="graph_uplift")?.network.nodes.length||3)).map(([x,y],i)=><circle key={i} cx={x} cy={y} r="6" fill={i===0?"var(--pink)":"var(--teal)"}/>)}<circle cx="49" cy="50" r="9" fill="var(--pink)"/></svg><small>DEPTH {String(active).padStart(2,"0")}</small></div>
    <main id="story-main">{data.chapters.map((chapter,index)=><section key={chapter.id} id={"chapter-"+chapter.id} data-chapter={chapter.id} className={"chapter chapter-"+chapter.id+(chapter.id===0?" hero-chapter":"")} aria-label={"Chapter "+chapter.id+": "+chapter.name}>
       {chapters[index]}{index>0&&index<data.chapters.length-1&&<div className="chapter-end"><span>{play?"MISSION FILE":"RESEARCH CHAPTER"} {String(index).padStart(2,"0")} / {chapter.name}</span><button onClick={()=>navigate(index+1)}>DESCEND DEEPER <ArrowDown size={14}/></button></div>}
    </section>)}</main>
-   {tipOpen&&active===0&&<div className="tip-wrapper"><TipCard active={active===0}/><button aria-label="Dismiss loading tip" onClick={()=>setTipOpen(false)}><X size={15}/></button></div>}
    <footer className="site-footer"><span>FraudGraph / Neon Ledger City</span><span>Historical ML study. No live wallet checker or guilt verdicts.</span><a href={data.repository} target="_blank" rel="noreferrer">View source <ExternalLink size={13}/></a></footer>
    {phone&&<Phone close={()=>setPhone(false)}/>}
    {vault&&<EvidenceVault close={()=>setVault(false)}/>}
