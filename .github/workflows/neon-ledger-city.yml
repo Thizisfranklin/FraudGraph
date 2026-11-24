@@ -1,0 +1,192 @@
+name: Neon Ledger City — evidence, build and publish
+on:
+  pull_request:
+    paths:
+      - 'story/**'
+      - 'scripts/generate_story_data.py'
+      - '.github/workflows/neon-ledger-city.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'story/**'
+      - 'scripts/generate_story_data.py'
+      - '.github/workflows/neon-ledger-city.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recover saved temporal research artifact
+        id: temporal
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: fraudgraph-temporal-study
+          run-id: 45307007554
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          path: .research/temporal
+      - name: Recover saved robustness experiment artifact
+        id: robustness
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: fraudgraph-robustness-and-analyst-report
+          run-id: 45308612475
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          path: .research/robustness
+      - name: Generate exact, typed, centralized data (never fabricate)
+        shell: bash
+        run: |
+          if [ -f .research/temporal/adaptive_posthoc_test_by_time.csv ] && [ -f .research/robustness/regularization_validation_folds.csv ]; then
+            python scripts/generate_story_data.py --temporal .research/temporal --robustness .research/robustness
+          elif [ -f story/src/data/data.ts ]; then
+            echo "::warning::Old experiment downloads unavailable; retaining previously generated, pinned source-backed data.ts."
+          else
+            echo "::error::Required experiment artifacts are unavailable and data.ts is missing."
+            exit 1
+          fi
+      - name: Commit reproduced data.ts for durable builds
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add story/src/data/data.ts
+          if ! git diff --cached --quiet; then
+            git commit -m "Pin exact original and follow-up FraudGraph evidence in story data.ts"
+            git push origin "HEAD:${{ github.head_ref }}"
+          fi
+      - name: Install story dependencies
+        working-directory: story
+        run: npm install --no-audit --no-fund
+      - name: Verify all research values are sourced
+        working-directory: story
+        run: npm test
+      - name: Build production story (single-file offline HTML)
+        working-directory: story
+        run: npm run build
+      - name: Build existing analyst Investigator alongside new story
+        working-directory: app
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Include Investigator at /investigator
+        run: |
+          mkdir -p story/dist/investigator
+          cp -R app/dist/. story/dist/investigator/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fraudgraph-neon-ledger-city-app
+          path: story/dist/
+          retention-days: 90
+          if-no-files-found: error
+
+
+  audit:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install audit dependencies
+        working-directory: story
+        run: npm install --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: fraudgraph-neon-ledger-city-app
+          path: story/dist/
+      - name: Install Chrome for keyboard, mobile and accessibility smoke checks
+        working-directory: story
+        run: npx playwright install --with-deps chromium
+      - name: Test chapter interactions in a real browser
+        working-directory: story
+        run: npm run test:ui
+      - name: Lighthouse performance / accessibility audit
+        working-directory: story
+        continue-on-error: true
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/fraudgraph-story-preview.log 2>&1 &
+          sleep 3
+          export CHROME_PATH="$(find "$HOME/.cache/ms-playwright" -type f \( -name chrome-headless-shell -o -name chrome \) | head -1)"
+          if [ ! -x "$CHROME_PATH" ]; then
+            echo "::warning::Chrome binary not accessible for Lighthouse; browser interaction and static contrast tests remain authoritative."
+            exit 0
+          fi
+          npx --yes lighthouse@12 http://127.0.0.1:4173 \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --only-categories=performance,accessibility,best-practices \
+            --output=json --output-path=dist/lighthouse.json --quiet
+      - name: Upload audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-ledger-city-browser-audit
+          path: |
+            story/playwright-report/
+            story/test-results/
+            story/dist/lighthouse.json
+          if-no-files-found: warn
+
+
+  deploy:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: fraudgraph-neon-ledger-city-app
+          path: site/
+      - name: Check repository owner's Pages setting
+        id: pagecheck
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" > /tmp/pages.json 2>/dev/null; then
+            BUILD=$(python -c "import json; print(json.load(open('/tmp/pages.json')).get('build_type',''))")
+            if [ "$BUILD" = "workflow" ]; then
+              echo "enabled=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+          echo "::notice::Repository owner must select Settings > Pages > Source: GitHub Actions. The tested single-file HTML remains downloadable in build artifacts."
+      - if: steps.pagecheck.outputs.enabled == 'true'
+        uses: actions/configure-pages@v5
+      - if: steps.pagecheck.outputs.enabled == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/
+      - if: steps.pagecheck.outputs.enabled == 'true'
+        id: deploy
+        uses: actions/deploy-pages@v4

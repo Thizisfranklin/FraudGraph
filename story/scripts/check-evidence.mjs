@@ -1,0 +1,15 @@
+import {readFileSync} from "node:fs";
+import assert from "node:assert/strict";
+const code=readFileSync(new URL("../src/data/data.ts",import.meta.url),"utf8");
+assert.ok(code.includes("export const data ="),"Central evidence module missing");
+assert.ok(code.includes("as unknown as ResearchData"),"Missing typed evidence contract");
+assert.ok(code.includes('"status":"awaiting"'),"Missing honest placeholder state");
+assert.ok(code.includes('"originalResults"'),"Main experiment evidence missing");
+assert.ok(code.includes('"regularization_validation_folds"')===false,"Wrong raw key naming");
+assert.ok(code.includes('"validationFolds"'),"Forward validation evidence missing");
+assert.ok(code.includes('"timeAP"'),"Per-period failure evidence missing");
+assert.ok(code.includes('"investigator"'),"Genuine network examples missing");
+const matches=code.match(/"time_step":43,"labeled":1370,"illicit":24,"ap":0\.026/);
+assert.ok(matches,"Preserved original step-43 collapse evidence missing");
+const m=code.match(/"transactions":/g);
+console.log("Verified central research module, missing-data semantics, temporal collapse, and graph case provenance.");

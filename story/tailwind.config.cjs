@@ -1,0 +1,1 @@
+module.exports={content:["./index.html","./src/**/*.{js,ts,jsx,tsx}"],theme:{extend:{fontFamily:{display:["Space Grotesk","system-ui"],body:["DM Sans","system-ui"]}}},plugins:[]};
