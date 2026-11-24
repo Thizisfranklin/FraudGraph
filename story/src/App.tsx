@@ -27,7 +27,7 @@ const TIPS=[
  "No new fraud outcomes are simulated in play mode.",
 ];
 const KONAMI=["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
-function goto(id:number){document.getElementById("chapter-"+id)?.scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"start"});}
+function goto(id:number,quick=false){document.getElementById("chapter-"+id)?.scrollIntoView({behavior:quick||window.matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth",block:"start"});}
 function PlayTone({active}:{active:boolean}){return null}
 function Vortex({reduce}:{reduce:boolean}){
  const {scrollYProgress}=useScroll();
@@ -138,7 +138,7 @@ export default function App(){
    oscillator.start();oscillator.stop(ctx.currentTime+.095);
   }catch{}
  };
- const navigate=(id:number)=>{goto(id);setNavOpen(false);tone();};
+ const navigate=(id:number)=>{goto(id,Math.abs(id-active)>1);setNavOpen(false);tone();};
  const clickLogo=()=>{setLogoClicks(v=>{if(v+1>=5){setChaos(x=>!x);return 0;}return v+1;});};
  const chapters=[
   <Entrance onEnter={()=>navigate(1)} play={play}/>,<OneTransaction/>,<TheNetwork/>,<TheUplift/>,
