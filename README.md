@@ -10,6 +10,16 @@ The goal isn't to declare someone guilty or automatically block transactions. It
 
 *One selected example: a known-illicit test transaction scored **0.299** using its own attributes and **0.689** after adding graph features. It's a useful illustration, not proof that every transaction improves.*
 
+## Explore FraudGraph as a story: Neon Ledger City
+
+**[Open the Neon Ledger City source](story/README.md)** · **[Download the standalone interactive HTML](https://github.com/Thizisfranklin/FraudGraph/actions/workflows/neon-ledger-city.yml)** · **[Research-to-chapter evidence audit](docs/STORY_EVIDENCE_COVERAGE.md)**
+
+A complete, source-backed interactive experience built with **React + TypeScript + Tailwind + Framer Motion**. Descend through the Bitcoin transaction evidence, investigate a real directed graph, switch between transaction and graph models, operate a limited analyst review queue, and confront the temporal collapse. The second act examines drift, actual forward-retraining results, regularization/underfitting controls, hypothetical label delays, and analyst budgets. Read and Play modes use the **same recorded evidence**; unsupported scenarios show `-- awaiting data --`.
+
+The creative world uses original sunset/palm/chrome SVG/CSS graphics, five accessible color themes, keyboard navigation and reduced-motion handling. It does **not** imply live Bitcoin scoring, calibrated probabilities, criminal guilt, or prospectively proven reliability.
+
+**Availability:** GitHub Actions produces an offline, single-file HTML in the `fraudgraph-neon-ledger-city-app` artifact. The planned Pages URL `https://thizisfranklin.github.io/FraudGraph/` requires the repository owner to enable **Settings → Pages → Source: GitHub Actions** once; enabling it is not within ordinary Actions permissions. The existing Investigator is preserved in the same download under `investigator/`.
+
 ## Open FraudGraph Investigator
 
 **[React application source and setup](app/README.md)** · **[Get the built app from GitHub Actions](https://github.com/Thizisfranklin/FraudGraph/actions/workflows/investigator-web.yml)**
