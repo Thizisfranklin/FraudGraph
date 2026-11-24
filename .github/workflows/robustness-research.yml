@@ -1,7 +1,5 @@
 name: Robustness and analyst research (manual)
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
     inputs:
       include_posthoc_test:
