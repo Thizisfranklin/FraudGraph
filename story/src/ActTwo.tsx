@@ -10,7 +10,7 @@ export function WhyBreak(){
  const defaults=options.includes("size")?"size":options[0];
  const [feature,setFeature]=useState(defaults);
  const all=data.temporal.drift.filter(r=>r.feature===feature).sort((a,b)=>a.time_step-b.time_step);
- const [step,setStep]=useState(data.primaryTimeline.find(r=>r.time_step===43)?.time_step||all.at(-1)?.time_step||0);
+ const [step,setStep]=useState(data.primaryTimeline.reduce((best,r,i,arr)=>i>0&&(arr[i-1].ap-r.ap)>best.drop?{step:r.time_step,drop:arr[i-1].ap-r.ap}:best,{step:data.primaryTimeline[0]?.time_step||0,drop:-Infinity}).step);
  const row=all.find(r=>r.time_step===step),labels=data.temporal.labelScore.find(r=>r.time_step===step);
  const summary=data.permutationImportance.find(x=>x.feature===feature);
  const mark=data.temporal.drift.filter(r=>r.feature===feature);
@@ -44,8 +44,8 @@ export function RetrainingLoop({play}:{play:boolean}){
  const isPosthoc=Boolean(posthoc);
  // Budget outcomes were measured only for validation-selected candidates in
  // robustness experiments; all unsupported combinations remain unavailable.
- const robustSelected=data.robustness.selected.find(x=>x.label_lag===2&&x.strategy===strategy);
- const review=data.robustness.capacity.find(x=>x.label_lag===2&&x.candidate===robustSelected?.candidate&&x.time_step===step&&x.capacity_fraction===budget);
+ const robustSelected=data.robustness.selected.find(x=>x.label_lag===data.robustness.selected[0]?.label_lag&&x.strategy===strategy);
+ const review=data.robustness.capacity.find(x=>x.label_lag===data.robustness.selected[0]?.label_lag&&x.candidate===robustSelected?.candidate&&x.time_step===step&&x.capacity_fraction===budget);
  const budgets=[...new Set(data.robustness.capacity.map(x=>x.capacity_fraction))];
  return <><SectionTitle eyebrow="CHAPTER 08 / ADAPTATION" title="You can retrain. Can you generalize?">A forward replay compares frozen, expanding, rolling, and recency-weighted XGBoost. Choose one recorded experiment and face the result.</SectionTitle>
  <DepthCard><div className="game-panel"><span className="eyebrow">{play?"ANALYST SIMULATION / REAL RESULTS":"FORWARD-REPLAY RESEARCH / RECORDED RESULTS"}</span>
@@ -83,7 +83,7 @@ export function AnalystBudgets({play}:{play:boolean}){
  const steps=[...new Set(data.robustness.capacity.map(x=>x.time_step))].sort((a,b)=>a-b);
  const [step,setStep]=useState(steps[0]);
  const budgets=[...new Set(data.robustness.capacity.map(x=>x.capacity_fraction))].sort((a,b)=>a-b);
- const [budget,setBudget]=useState(budgets.find(x=>x===.05)||budgets[0]);
+ const [budget,setBudget]=useState(budgets[Math.floor(budgets.length/2)]||budgets[0]);
  const selected=data.robustness.selected.find(x=>x.label_lag===lag);
  const row=data.robustness.capacity.find(x=>x.label_lag===lag&&x.candidate===selected?.candidate&&x.time_step===step&&x.capacity_fraction===budget);
  return <><SectionTitle eyebrow="CHAPTER 10 / REAL REVIEW BUDGETS" title="Unknown still fills the queue.">An analyst's time is limited. Select a recorded period and budget—never an imagined outcome.</SectionTitle><DepthCard>
@@ -99,11 +99,11 @@ export function Workbench(){
  const [idx,setIdx]=useState(0);
  const examples=data.investigator;
  const record=examples[idx]||examples[0];
- const limit=Math.min(examples.length,20);
+ const limit=Math.min(examples.length,20);const rank=[...examples].sort((a,b)=>b.scores.graph-a.scores.graph).findIndex(x=>x.id===record?.id);const priorityTier=Math.max(1,Math.min(5,Math.ceil(5*(examples.length-rank)/examples.length)));
  return <><SectionTitle eyebrow="CHAPTER 11 / HUMAN IN THE LOOP" title="Meet the Investigator.">This part isn't just a roadmap anymore. There's a working retrospective React prototype. Live wallet checking and production decisions remain future work.</SectionTitle>
  <DepthCard><div className="stage-top"><div><span className="eyebrow">REAL SAVED DATASET CASES</span><h3>{record?"TX "+record.id:EMPTY}</h3></div><div className="field-stack"><label className="field-caption" htmlFor="sample-selector">Choose an investigation</label><select className="neon-select" id="sample-selector" value={idx} onChange={e=>setIdx(Number(e.target.value))}>{examples.slice(0,limit).map((r,i)=><option key={r.id} value={i}>Transaction {r.id}</option>)}</select></div></div>
  {record?<><NetworkMap record={record} compact/><div className="network-factwall"><Fact label="Historical graph score" value={m(record.scores.graph,4)}/><Fact label="Transaction-only score" value={m(record.scores.transaction,4)}/><Fact label="Dataset label" value={record.retrospectiveClass===1?"Illicit":record.retrospectiveClass===2?"Licit":"Unknown"}/><Fact label="Case pool" value={count(examples.length)}/></div></>:<div>{EMPTY}</div>}
- <div className="source-links"><a href={data.repository+"/tree/main/app"} target="_blank" rel="noreferrer">Open the existing React Investigator <ExternalLink size={15}/></a><a href={data.repository+"/blob/main/docs/ANALYST_WORKBENCH_ROADMAP.md"} target="_blank" rel="noreferrer">Read the live-system roadmap <ExternalLink size={15}/></a></div>
+ <div className="priority-tier" title="Rank tier among the bundled historical sample; not probability or guilt"><span aria-label={"Sample review rank tier "+priorityTier+" of five"}>{"★".repeat(priorityTier)}{"☆".repeat(5-priorityTier)}</span><small>VISUAL REVIEW-PRIORITY TIER IN THIS SAMPLE · NOT GUILT</small></div><div className="source-links"><a href={data.repository+"/tree/main/app"} target="_blank" rel="noreferrer">Open the existing React Investigator <ExternalLink size={15}/></a><a href={data.repository+"/blob/main/docs/ANALYST_WORKBENCH_ROADMAP.md"} target="_blank" rel="noreferrer">Read the live-system roadmap <ExternalLink size={15}/></a></div>
  <ResearchNote source="app/README.md">This existing app explores historical cases and stores analyst notes in the browser. It does not establish transaction guilt, recognize wallet ownership, or score an arbitrary live Bitcoin transaction.</ResearchNote></DepthCard></>;
 }
 
