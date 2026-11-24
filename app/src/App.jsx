@@ -78,7 +78,7 @@ function NetworkView({record,onInspect}) {
     const center=entries.find(n=>n.focus)||entries.find(n=>n.id===record.id);
     const others=entries.filter(n=>n.id!==record.id);
     const nodes=(center?[center]:[]).concat(others).map((n,i)=>{
-      const r=others.length<=8?220:270;
+      const r=others.length<=8?155:270;
       const angle=-Math.PI/2+2*Math.PI*((i-1)/Math.max(others.length,1));
       const focus=n.id===record.id;
       return {id:String(n.id),position:focus?{x:400,y:270}:{x:400+r*Math.cos(angle),y:270+r*Math.sin(angle)},
@@ -143,7 +143,7 @@ function App(){
     return records.filter(r=>(!q||String(r.id).includes(q)||String(CASE_NAMES[r.caseType]||"").toLowerCase().includes(q))
        &&(labelFilter==="all"||String(r.retrospectiveClass)===labelFilter)
        &&(stepFilter==="all"||String(r.timeStep)===stepFilter))
-      .sort((a,b)=>b.scores.graph-a.scores.graph||String(a.id).localeCompare(String(b.id)));
+      .sort((a,b)=>{const pinned={high_score_illicit:0,high_score_licit:1,graph_uplift:2};const ap=pinned[a.caseType]??99,bp=pinned[b.caseType]??99;return ap-bp||b.scores.graph-a.scores.graph||String(a.id).localeCompare(String(b.id));});
   },[records,search,labelFilter,stepFilter]);
   const visible=showAll?filtered:filtered.slice(0,30);
   const allSteps=useMemo(()=>[...new Set(records.map(r=>r.timeStep))].sort((a,b)=>a-b),[records]);
